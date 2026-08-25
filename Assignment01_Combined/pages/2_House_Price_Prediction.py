@@ -13,7 +13,7 @@ import streamlit as st
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from Assignment01_Combined.modules.house_price.neo4j_service import (  # noqa: E402
+from modules.house_price.neo4j_service import (  # noqa: E402
     get_knowledge_graph_summary,
     get_recent_predictions,
     save_prediction,
