@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: intelligent-system-assignment-01
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: >
+      streamlit run app.py
+      --server.address 0.0.0.0
+      --server.port $PORT
+      --server.headless true
+    envVars:
+      - key: NEO4J_URI
+        sync: false
+      - key: NEO4J_USER
+        sync: false
+      - key: NEO4J_PASSWORD
+        sync: false
+      - key: NEO4J_DATABASE
+        sync: false
