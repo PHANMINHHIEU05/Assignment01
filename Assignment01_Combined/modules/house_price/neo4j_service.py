@@ -220,11 +220,14 @@ def get_recent_predictions(limit=5):
         with driver.session(database=database) as session:
             result = session.run(
                 """
-                MATCH (pred:HousePrediction)-[:HOUSE_PRODUCED_BY]->(model:HouseModel)
+                MATCH (obs:HouseObservation)-[:HOUSE_HAS_PREDICTION]->(pred:HousePrediction)
+                MATCH (pred)-[:HOUSE_PRODUCED_BY]->(model:HouseModel)
                 RETURN pred.prediction_id AS prediction_id,
                        pred.predicted_price_billion AS predicted_price_billion,
                        pred.created_at AS created_at,
-                       model.name AS model
+                       model.name AS model,
+                       obs.province AS province,
+                       obs.district AS district
                 ORDER BY pred.created_at DESC
                 LIMIT $limit
                 """,

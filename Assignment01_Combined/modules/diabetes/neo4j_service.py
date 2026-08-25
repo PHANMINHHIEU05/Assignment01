@@ -322,12 +322,23 @@ def _get_knowledge_graph_summary_in_session(session):
         MATCH (o:Outcome)
         WITH models, features, conditions, representations, count(o) AS outcomes
         MATCH (metric:Metric)
+        WITH models,
+             features,
+             conditions,
+             representations,
+             outcomes,
+             count(metric) AS metrics
+        OPTIONAL MATCH (obs:Observation)
+        WITH models, features, conditions, representations, outcomes, metrics, count(obs) AS observations
+        OPTIONAL MATCH (prediction:Prediction)
         RETURN models,
                features,
                conditions,
                representations,
                outcomes,
-               count(metric) AS metrics
+               metrics,
+               observations,
+               count(prediction) AS predictions
         """
     ).single()
 
@@ -373,6 +384,8 @@ def _get_knowledge_graph_summary_in_session(session):
         "representations": counts["representations"],
         "outcomes": counts["outcomes"],
         "metrics": counts["metrics"],
+        "observations": counts["observations"],
+        "predictions": counts["predictions"],
         "uses_feature": relationships["uses_feature"],
         "input_for": relationships["input_for"],
         "part_of_representation": relationships["part_of_representation"],

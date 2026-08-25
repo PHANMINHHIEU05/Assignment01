@@ -19,6 +19,25 @@ from modules.house_price.neo4j_service import (  # noqa: E402
     save_prediction,
     verify_connection,
 )
+from ui.components import (  # noqa: E402
+    format_decimal,
+    format_percent,
+    format_time,
+    inject_global_styles,
+    render_card,
+    render_empty_state,
+    render_footer,
+    render_graph_legend,
+    render_info_banner,
+    render_metric_grid,
+    render_model_badge,
+    render_page_header,
+    render_prediction_card,
+    render_recent_prediction_card,
+    render_schema_graph,
+    render_section_header,
+    render_status_badge,
+)
 
 
 MODULE_ROOT = PROJECT_ROOT / "modules" / "house_price"
@@ -27,12 +46,18 @@ REGISTRY_PATH = MODELS_DIR / "model_registry.json"
 METADATA_PATH = MODELS_DIR / "ui_metadata.json"
 
 
-st.set_page_config(page_title="Vietnam House Price Prediction", page_icon="HP", layout="centered")
+st.set_page_config(
+    page_title="Vietnam House Price Prediction",
+    page_icon="HP",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+inject_global_styles()
 
 
 def load_json(path: Path, label: str):
     if not path.exists():
-        st.error(f"{label} was not found: {path}")
+        st.error(f"{label} was not found.")
         st.stop()
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -50,94 +75,205 @@ def check_neo4j_status():
         return False
 
 
-def format_metric(value):
-    return f"{float(value):.4f}"
+def detail_table(summary: dict) -> pd.DataFrame:
+    return pd.DataFrame(
+        [{"Metric": key.replace("_", " ").title(), "Value": value} for key, value in summary.items()]
+    )
 
 
 registry = load_json(REGISTRY_PATH, "model_registry.json")
 metadata = load_json(METADATA_PATH, "ui_metadata.json")
 selected_features = registry["selected_features"]
+model_names = list(registry["models"].keys())
+neo4j_available = check_neo4j_status()
 
-st.title("Vietnam House Price Prediction System")
-st.caption("Vietnam Housing Dataset 2024")
-st.info(
-    "Educational machine-learning demonstration. Predictions are model estimates "
-    "and are not official property valuations."
+with st.sidebar:
+    st.markdown("### INTELLIGENT SYSTEM")
+    st.caption("Assignment 01")
+    st.divider()
+    st.markdown("**CURRENT MODEL**")
+    selected_model_name = st.selectbox("Choose regressor", model_names, label_visibility="collapsed")
+    model_info = registry["models"][selected_model_name]
+    render_model_badge(selected_model_name == registry["scientific_final_model"])
+    st.divider()
+    st.markdown("**SYSTEM STATUS**")
+    render_status_badge("Neo4j", "Connected" if neo4j_available else "Unavailable", "success" if neo4j_available else "warning")
+
+render_page_header(
+    "Vietnam House Price",
+    "Vietnam House Price Prediction",
+    "Machine-learning regression for estimating residential property prices from structured property information.",
+    ["Regression", "6 Features", "Vietnam Housing Dataset 2024"],
+)
+render_info_banner("Educational model estimate. Not an official property valuation.")
+
+overview_cols = st.columns(4)
+with overview_cols[0]:
+    render_card("Selected Model", selected_model_name, "Scientific final model" if selected_model_name == registry["scientific_final_model"] else "Deployment comparison model")
+with overview_cols[1]:
+    render_card("Problem", "Regression", "Predicts continuous price")
+with overview_cols[2]:
+    render_card("Representation", "6 Features", "Area, structure and location")
+with overview_cols[3]:
+    render_card("Target", "House Price", "billion VND")
+
+render_section_header("Property Features", "Select location and enter the physical property attributes used by the saved model.")
+ranges = metadata["numeric_ranges"]
+with st.container(border=True):
+    loc_1, loc_2 = st.columns(2)
+    with loc_1:
+        province = st.selectbox("Province", metadata["provinces"], help="Broad location feature extracted from Address.")
+    with loc_2:
+        district = st.selectbox("District", metadata["province_districts"].get(province, []), help="District list is filtered by Province.")
+
+    num_1, num_2 = st.columns(2)
+    with num_1:
+        area = st.number_input("Area (m²)", min_value=0.0, max_value=max(1000.0, float(ranges["Area"]["max"])), value=float(ranges["Area"]["median"]), step=1.0, help="Property area in square meters. Enter 0 if unavailable.")
+        bedrooms = st.number_input("Bedrooms", min_value=0.0, max_value=50.0, value=float(ranges["Bedrooms"]["median"]), step=1.0, help="Number of bedrooms. Enter 0 if unavailable.")
+    with num_2:
+        floors = st.number_input("Floors", min_value=0.0, max_value=50.0, value=float(ranges["Floors"]["median"]), step=1.0, help="Number of floors. Enter 0 if unavailable.")
+        bathrooms = st.number_input("Bathrooms", min_value=0.0, max_value=50.0, value=float(ranges["Bathrooms"]["median"]), step=1.0, help="Number of bathrooms. Enter 0 if unavailable.")
+    submit = st.button("Estimate House Price", type="primary", use_container_width=True)
+
+sample = pd.DataFrame(
+    [
+        {
+            "Area": np.nan if area == 0 else area,
+            "Floors": np.nan if floors == 0 else floors,
+            "Bedrooms": np.nan if bedrooms == 0 else bedrooms,
+            "Bathrooms": np.nan if bathrooms == 0 else bathrooms,
+            "Province": province,
+            "District": district,
+        }
+    ],
+    columns=selected_features,
 )
 
-selected_model_name = st.selectbox("Choose regression model", list(registry["models"].keys()))
 model_info = registry["models"][selected_model_name]
-if selected_model_name == registry["scientific_final_model"]:
-    st.success("Scientific Final Model")
-else:
-    st.info("Deployment Comparison Model")
-
-province = st.selectbox("Province", metadata["provinces"])
-district = st.selectbox("District", metadata["province_districts"].get(province, []))
-ranges = metadata["numeric_ranges"]
-area = st.number_input("Area", min_value=0.0, max_value=max(1000.0, float(ranges["Area"]["max"])), value=float(ranges["Area"]["median"]), step=1.0)
-floors = st.number_input("Floors", min_value=0.0, max_value=50.0, value=float(ranges["Floors"]["median"]), step=1.0)
-bedrooms = st.number_input("Bedrooms", min_value=0.0, max_value=50.0, value=float(ranges["Bedrooms"]["median"]), step=1.0)
-bathrooms = st.number_input("Bathrooms", min_value=0.0, max_value=50.0, value=float(ranges["Bathrooms"]["median"]), step=1.0)
-
-sample = pd.DataFrame([{
-    "Area": np.nan if area == 0 else area,
-    "Floors": np.nan if floors == 0 else floors,
-    "Bedrooms": np.nan if bedrooms == 0 else bedrooms,
-    "Bathrooms": np.nan if bathrooms == 0 else bathrooms,
-    "Province": province,
-    "District": district,
-}], columns=selected_features)
-
 model = load_model(str(MODELS_DIR / model_info["file"]))
-if st.button("Predict House Price", type="primary"):
+if submit:
     predicted_billion = float(model.predict(sample)[0])
     predicted_vnd = predicted_billion * 1_000_000_000
-    st.subheader("Model Estimate")
-    st.write(f"Selected Model: **{selected_model_name}**")
-    st.metric("Estimated House Price", f"{predicted_billion:,.2f} billion VND")
-    st.write(f"Approximate VND: {predicted_vnd:,.0f} VND")
+    sub_parts = [
+        f"≈ {predicted_vnd:,.0f} VND",
+        f"Model: {selected_model_name}",
+    ]
+    if selected_model_name == registry["scientific_final_model"]:
+        sub_parts.append("Scientific Final Model")
+    render_prediction_card(
+        "Estimated House Price",
+        f"{predicted_billion:,.2f} B VND",
+        " · ".join(sub_parts),
+        "success",
+    )
     try:
         save_prediction(selected_model_name, sample.iloc[0].to_dict(), predicted_billion)
-        st.success("Anonymous prediction saved to the House Price Knowledge Graph.")
-    except Exception as error:
-        st.warning(f"Prediction completed, but Neo4j save is unavailable: {error}")
+        render_info_banner("Anonymous prediction saved to the House Price Knowledge Graph.")
+    except Exception:
+        st.warning("Unable to save prediction to Knowledge Graph. The model prediction is still available.")
 
-st.subheader("Selected Model Metrics")
+render_section_header("Model Performance", "5-fold cross-validation metrics from the selected saved model registry.")
 metrics = model_info["cv_metrics"]
-cols = st.columns(2)
-cols[0].metric("CV MAE", format_metric(metrics["MAE"]))
-cols[1].metric("CV MSE", format_metric(metrics["MSE"]))
-cols[0].metric("CV RMSE", format_metric(metrics["RMSE"]))
-cols[1].metric("CV R2", format_metric(metrics["R2"]))
-st.metric("CV MAPE", format_metric(metrics["MAPE"]))
+render_metric_grid(
+    [
+        ("MAE", f"{format_decimal(metrics['MAE'])} B VND", "Mean absolute error"),
+        ("MSE", format_decimal(metrics["MSE"]), "Mean squared error"),
+        ("RMSE", f"{format_decimal(metrics['RMSE'])} B VND", "Primary selection metric"),
+        ("R2", format_decimal(metrics["R2"]), "Explained variance quality"),
+        ("MAPE", format_percent(metrics["MAPE"]), "Average percentage-type error"),
+    ]
+)
 
 if selected_model_name == registry["scientific_final_model"]:
     with st.expander("Scientific Held-out Test Metrics"):
         final_metrics = registry["final_test_metrics"]
-        st.write(f"MAE: {format_metric(final_metrics['MAE'])}")
-        st.write(f"MSE: {format_metric(final_metrics['MSE'])}")
-        st.write(f"RMSE: {format_metric(final_metrics['RMSE'])}")
-        st.write(f"R2: {format_metric(final_metrics['R2'])}")
-        st.write(f"MAPE: {format_metric(final_metrics['MAPE'])}")
+        render_metric_grid(
+            [
+                ("MAE", f"{format_decimal(final_metrics['MAE'])} B VND", "Held-out test"),
+                ("MSE", format_decimal(final_metrics["MSE"]), "Held-out test"),
+                ("RMSE", f"{format_decimal(final_metrics['RMSE'])} B VND", "Held-out test"),
+                ("R2", format_decimal(final_metrics["R2"]), "Held-out test"),
+                ("MAPE", format_percent(final_metrics["MAPE"]), "Held-out test"),
+            ]
+        )
 
-st.divider()
-st.subheader("Neo4j AuraDB")
-if check_neo4j_status():
-    st.success("Connected")
-else:
-    st.warning("Unavailable")
+kg_tab, recent_tab, details_tab = st.tabs(["Knowledge Graph", "Recent Predictions", "Model Details"])
 
-try:
-    st.write("Knowledge Graph Summary")
-    st.json(get_knowledge_graph_summary())
-except Exception:
-    st.caption("Knowledge Graph summary is unavailable.")
+with kg_tab:
+    render_section_header("Knowledge Graph Overview", "House-prefixed Neo4j labels keep this graph separate from Diabetes.")
+    if neo4j_available:
+        try:
+            summary = get_knowledge_graph_summary()
+            render_metric_grid(
+                [
+                    ("Models", str(summary.get("HouseModel", 0)), "Regressor nodes"),
+                    ("Features", str(summary.get("HouseFeature", 0)), "Input feature nodes"),
+                    ("Metrics", str(summary.get("HouseMetric", 0)), "Regression metrics"),
+                    ("Provinces", str(summary.get("HouseProvince", 0)), "Location nodes"),
+                    ("Districts", str(summary.get("HouseDistrict", 0)), "Location nodes"),
+                    ("Predictions", str(summary.get("HousePrediction", 0)), "Anonymous records"),
+                ]
+            )
+            render_schema_graph(
+                [
+                    ("Target", [("House Price", "target")]),
+                    ("Representation", [("Six Feature Representation", "representation")]),
+                    ("Features", [(feature, "feature") for feature in selected_features]),
+                    ("Models", [(name, "model") for name in model_names]),
+                    ("Location", [("District", "outcome"), ("Province", "outcome")]),
+                ]
+            )
+            render_graph_legend(
+                [
+                    ("Model", ""),
+                    ("Feature", "warning"),
+                    ("Target", "success"),
+                    ("Location", "warning"),
+                    ("Representation", ""),
+                ]
+            )
+            with st.expander("Advanced Graph Details"):
+                st.table(detail_table(summary))
+        except Exception:
+            render_empty_state("Knowledge Graph temporarily unavailable", "Prediction remains operational.")
+    else:
+        render_empty_state("Knowledge Graph temporarily unavailable", "Prediction system is still operational.")
 
-try:
-    recent = get_recent_predictions(limit=5)
-    if recent:
-        st.write("Recent Anonymous Price Predictions")
-        st.dataframe(pd.DataFrame(recent), use_container_width=True)
-except Exception:
-    st.caption("Recent predictions are unavailable.")
+with recent_tab:
+    render_section_header("Recent House Price Predictions", "Anonymous predictions without exact street address.")
+    if neo4j_available:
+        try:
+            recent_predictions = get_recent_predictions(limit=10)
+            if recent_predictions:
+                for record in recent_predictions:
+                    price = float(record.get("predicted_price_billion", 0.0))
+                    location = " · ".join(
+                        item
+                        for item in [record.get("province"), record.get("district")]
+                        if item
+                    )
+                    render_recent_prediction_card(
+                        format_time(record.get("created_at")),
+                        str(record.get("model", "Model")),
+                        f"{price:,.2f} B VND",
+                        location or "Anonymous house price estimate",
+                    )
+            else:
+                render_empty_state("No predictions recorded yet", "Run a prediction to create the first anonymous graph observation.")
+        except Exception:
+            render_empty_state("Recent predictions unavailable", "The model prediction system remains operational.")
+    else:
+        render_empty_state("Recent predictions unavailable", "Neo4j is currently unavailable.")
+
+with details_tab:
+    render_section_header("Model Details", "A compact explanation of the selected deployment artifact.")
+    render_card(
+        "Selected Algorithm",
+        selected_model_name,
+        "Selected by training CV RMSE" if selected_model_name == registry["scientific_final_model"] else "Comparison model available for deployment demonstration",
+    )
+    st.markdown("**Input features**")
+    st.table(pd.DataFrame({"Feature": selected_features}))
+    st.caption("The saved pipeline handles imputation, scaling, and one-hot encoding internally. No model retraining occurs in Streamlit.")
+
+render_footer()
