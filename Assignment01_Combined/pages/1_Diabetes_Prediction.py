@@ -91,7 +91,10 @@ if selected_model_name == registry["final_selected_model"]:
 st.sidebar.divider()
 st.sidebar.subheader("Knowledge Graph")
 neo4j_available = check_neo4j_status()
-st.sidebar.success("Neo4j AuraDB Connected") if neo4j_available else st.sidebar.warning("Neo4j AuraDB Unavailable")
+if neo4j_available:
+    st.sidebar.success("Neo4j AuraDB Connected")
+else:
+    st.sidebar.warning("Neo4j AuraDB Unavailable")
 
 st.subheader("Six Input Features")
 input_col_1, input_col_2 = st.columns(2)
@@ -124,7 +127,10 @@ if st.button("Predict Diabetes", type="primary", use_container_width=True):
     prediction = int(model.predict(sample)[0])
     label = "Diabetes" if prediction == 1 else "No Diabetes"
     st.write(f"Selected Model: **{selected_model_name}**")
-    st.warning(f"Model Prediction: {label}") if prediction == 1 else st.success(f"Model Prediction: {label}")
+    if prediction == 1:
+        st.warning(f"Model Prediction: {label}")
+    else:
+        st.success(f"Model Prediction: {label}")
     probability = None
     decision_score = None
     if bool(model_info.get("supports_probability")) and hasattr(model, "predict_proba"):
