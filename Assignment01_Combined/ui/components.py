@@ -309,15 +309,14 @@ def render_metric_grid(metrics: list[tuple[str, str, str]]):
     cards = []
     for label, value, help_text in metrics:
         cards.append(
-            f"""
-            <div class="metric-card">
-                <div class="metric-label">{escape(label)}</div>
-                <div class="metric-value">{escape(value)}</div>
-                <div class="metric-help">{escape(help_text)}</div>
-            </div>
-            """
+            "<div class='metric-card'>"
+            f"<div class='metric-label'>{escape(label)}</div>"
+            f"<div class='metric-value'>{escape(value)}</div>"
+            f"<div class='metric-help'>{escape(help_text)}</div>"
+            "</div>"
         )
-    st.markdown("<div class='metric-grid'>" + "".join(cards) + "</div>", unsafe_allow_html=True)
+    html = "<div class='metric-grid'>" + "".join(cards) + "</div>"
+    st.markdown(html, unsafe_allow_html=True)
 
 
 def render_prediction_card(kicker: str, main: str, sub: str, status: str = "success", progress: float | None = None):
