@@ -1,0 +1,35 @@
+[
+    {
+        "input": {
+            "Area": 35.0,
+            "Floors": 2.0,
+            "Bedrooms": 2.0,
+            "Bathrooms": 1.0,
+            "Province": "Hà Nội",
+            "District": "Cầu Giấy"
+        },
+        "predicted_price_billion": 3.836663914496358
+    },
+    {
+        "input": {
+            "Area": 70.0,
+            "Floors": 4.0,
+            "Bedrooms": 4.0,
+            "Bathrooms": 3.0,
+            "Province": "Hồ Chí Minh",
+            "District": "Gò Vấp"
+        },
+        "predicted_price_billion": 7.805499987513429
+    },
+    {
+        "input": {
+            "Area": 150.0,
+            "Floors": 5.0,
+            "Bedrooms": 6.0,
+            "Bathrooms": 5.0,
+            "Province": "Đà Nẵng",
+            "District": "Cẩm Lệ"
+        },
+        "predicted_price_billion": 8.336343607929239
+    }
+]

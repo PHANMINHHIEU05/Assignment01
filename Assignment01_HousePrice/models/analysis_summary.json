@@ -1,0 +1,452 @@
+{
+    "dataset": {
+        "shape": [
+            30229,
+            12
+        ],
+        "columns": [
+            "Address",
+            "Area",
+            "Frontage",
+            "Access Road",
+            "House direction",
+            "Balcony direction",
+            "Floors",
+            "Bedrooms",
+            "Bathrooms",
+            "Legal status",
+            "Furniture state",
+            "Price"
+        ],
+        "dtypes": {
+            "Address": "str",
+            "Area": "float64",
+            "Frontage": "float64",
+            "Access Road": "float64",
+            "House direction": "str",
+            "Balcony direction": "str",
+            "Floors": "float64",
+            "Bedrooms": "float64",
+            "Bathrooms": "float64",
+            "Legal status": "str",
+            "Furniture state": "str",
+            "Price": "float64"
+        },
+        "missing_counts": {
+            "Address": 0,
+            "Area": 0,
+            "Frontage": 11564,
+            "Access Road": 13297,
+            "House direction": 21239,
+            "Balcony direction": 24983,
+            "Floors": 3603,
+            "Bedrooms": 5162,
+            "Bathrooms": 7074,
+            "Legal status": 4506,
+            "Furniture state": 14119,
+            "Price": 0
+        },
+        "missing_percent": {
+            "Address": 0.0,
+            "Area": 0.0,
+            "Frontage": 38.25,
+            "Access Road": 43.99,
+            "House direction": 70.26,
+            "Balcony direction": 82.65,
+            "Floors": 11.92,
+            "Bedrooms": 17.08,
+            "Bathrooms": 23.4,
+            "Legal status": 14.91,
+            "Furniture state": 46.71,
+            "Price": 0.0
+        },
+        "duplicate_rows": 0,
+        "price_range": [
+            1.0,
+            11.5
+        ],
+        "area_range": [
+            3.1,
+            595.0
+        ],
+        "price_median": 5.9,
+        "area_median": 56.0,
+        "describe_numeric": {
+            "Area": {
+                "count": 30229.0,
+                "mean": 68.4987,
+                "std": 48.0698,
+                "min": 3.1,
+                "25%": 40.0,
+                "50%": 56.0,
+                "75%": 80.0,
+                "max": 595.0
+            },
+            "Frontage": {
+                "count": 18665.0,
+                "mean": 5.3617,
+                "std": 4.3462,
+                "min": 1.0,
+                "25%": 4.0,
+                "50%": 4.5,
+                "75%": 5.0,
+                "max": 77.0
+            },
+            "Access Road": {
+                "count": 16932.0,
+                "mean": 7.8538,
+                "std": 7.4513,
+                "min": 1.0,
+                "25%": 4.0,
+                "50%": 6.0,
+                "75%": 10.0,
+                "max": 85.0
+            },
+            "Floors": {
+                "count": 26626.0,
+                "mean": 3.4104,
+                "std": 1.3289,
+                "min": 1.0,
+                "25%": 2.0,
+                "50%": 3.0,
+                "75%": 4.0,
+                "max": 10.0
+            },
+            "Bedrooms": {
+                "count": 25067.0,
+                "mean": 3.511,
+                "std": 1.3091,
+                "min": 1.0,
+                "25%": 3.0,
+                "50%": 3.0,
+                "75%": 4.0,
+                "max": 9.0
+            },
+            "Bathrooms": {
+                "count": 23155.0,
+                "mean": 3.3468,
+                "std": 1.4002,
+                "min": 1.0,
+                "25%": 2.0,
+                "50%": 3.0,
+                "75%": 4.0,
+                "max": 9.0
+            },
+            "Price": {
+                "count": 30229.0,
+                "mean": 5.8721,
+                "std": 2.2119,
+                "min": 1.0,
+                "25%": 4.2,
+                "50%": 5.9,
+                "75%": 7.5,
+                "max": 11.5
+            }
+        },
+        "province_count": 77,
+        "district_count": 342,
+        "top_provinces": {
+            "Hồ Chí Minh": 11778,
+            "Hà Nội": 10461,
+            "Bình Dương": 1672,
+            "Đà Nẵng": 1437,
+            "Đồng Nai": 829,
+            "Hải Phòng": 789,
+            "Khánh Hòa": 743,
+            "Hưng Yên": 405,
+            "Long An": 339,
+            "Bà Rịa Vũng Tàu": 240
+        }
+    },
+    "eda_charts": [
+        "figures/01_price_distribution.png",
+        "figures/02_area_distribution.png",
+        "figures/03_floors_distribution.png",
+        "figures/04_bedrooms_distribution.png",
+        "figures/05_top_provinces_distribution.png"
+    ],
+    "features": {
+        "full": [
+            "Area",
+            "Frontage",
+            "Access Road",
+            "House direction",
+            "Balcony direction",
+            "Floors",
+            "Bedrooms",
+            "Bathrooms",
+            "Legal status",
+            "Furniture state",
+            "Province",
+            "District"
+        ],
+        "selected": [
+            "Area",
+            "Floors",
+            "Bedrooms",
+            "Bathrooms",
+            "Province",
+            "District"
+        ]
+    },
+    "split": {
+        "train_rows": 24183,
+        "test_rows": 6046,
+        "test_size": 0.2,
+        "random_state": 42
+    },
+    "baseline": {
+        "full": {
+            "MAE Mean": 1.8436555786463351,
+            "MAE Std": 0.013964368594094083,
+            "MSE Mean": 4.896983120608597,
+            "MSE Std": 0.0614007834838133,
+            "RMSE Mean": 2.2128694739483796,
+            "RMSE Std": 0.013849616457525383,
+            "R2 Mean": -0.00014667404832806595,
+            "R2 Std": 6.084864285732658e-05,
+            "MAPE Mean": 0.447518068035403,
+            "MAPE Std": 0.005656411863982985
+        },
+        "compact": {
+            "MAE": 1.8436555786463351,
+            "MSE": 4.896983120608597,
+            "RMSE": 2.2128694739483796,
+            "R2": -0.00014667404832806595,
+            "MAPE": 0.447518068035403
+        }
+    },
+    "experiment1": {
+        "full_table": [
+            {
+                "Model": "Linear Regression",
+                "MAE Mean": 1.309652,
+                "MAE Std": 0.017257,
+                "MSE Mean": 2.802929,
+                "MSE Std": 0.090146,
+                "RMSE Mean": 1.673977,
+                "RMSE Std": 0.027013,
+                "R2 Mean": 0.427609,
+                "R2 Std": 0.014437,
+                "MAPE Mean": 0.281752,
+                "MAPE Std": 0.006526
+            },
+            {
+                "Model": "Decision Tree",
+                "MAE Mean": 1.226401,
+                "MAE Std": 0.015139,
+                "MSE Mean": 3.116083,
+                "MSE Std": 0.097218,
+                "RMSE Mean": 1.765033,
+                "RMSE Std": 0.027259,
+                "R2 Mean": 0.363522,
+                "R2 Std": 0.019922,
+                "MAPE Mean": 0.249735,
+                "MAPE Std": 0.007565
+            },
+            {
+                "Model": "Random Forest",
+                "MAE Mean": 1.051997,
+                "MAE Std": 0.014931,
+                "MSE Mean": 2.098277,
+                "MSE Std": 0.072581,
+                "RMSE Mean": 1.448328,
+                "RMSE Std": 0.02497,
+                "R2 Mean": 0.571431,
+                "R2 Std": 0.014493,
+                "MAPE Mean": 0.218633,
+                "MAPE Std": 0.006139
+            },
+            {
+                "Model": "Extra Trees",
+                "MAE Mean": 1.084158,
+                "MAE Std": 0.015325,
+                "MSE Mean": 2.325462,
+                "MSE Std": 0.08292,
+                "RMSE Mean": 1.524705,
+                "RMSE Std": 0.027146,
+                "R2 Mean": 0.525025,
+                "R2 Std": 0.016746,
+                "MAPE Mean": 0.222951,
+                "MAPE Std": 0.00629
+            },
+            {
+                "Model": "Gradient Boosting",
+                "MAE Mean": 1.259081,
+                "MAE Std": 0.012091,
+                "MSE Mean": 2.500395,
+                "MSE Std": 0.048356,
+                "RMSE Mean": 1.58119,
+                "RMSE Std": 0.01532,
+                "R2 Mean": 0.489335,
+                "R2 Std": 0.006913,
+                "MAPE Mean": 0.279553,
+                "MAPE Std": 0.006106
+            }
+        ],
+        "compact_table": [
+            {
+                "Model": "Linear Regression",
+                "MAE": 1.309652,
+                "MSE": 2.802929,
+                "RMSE": 1.673977,
+                "R2": 0.427609,
+                "MAPE": 0.281752
+            },
+            {
+                "Model": "Decision Tree",
+                "MAE": 1.226401,
+                "MSE": 3.116083,
+                "RMSE": 1.765033,
+                "R2": 0.363522,
+                "MAPE": 0.249735
+            },
+            {
+                "Model": "Random Forest",
+                "MAE": 1.051997,
+                "MSE": 2.098277,
+                "RMSE": 1.448328,
+                "R2": 0.571431,
+                "MAPE": 0.218633
+            },
+            {
+                "Model": "Extra Trees",
+                "MAE": 1.084158,
+                "MSE": 2.325462,
+                "RMSE": 1.524705,
+                "R2": 0.525025,
+                "MAPE": 0.222951
+            },
+            {
+                "Model": "Gradient Boosting",
+                "MAE": 1.259081,
+                "MSE": 2.500395,
+                "RMSE": 1.58119,
+                "R2": 0.489335,
+                "MAPE": 0.279553
+            }
+        ],
+        "best_model": "Random Forest"
+    },
+    "experiment2": {
+        "table": [
+            {
+                "max_depth": "5",
+                "MAE": 1.398798,
+                "MSE": 3.061783,
+                "RMSE": 1.749748,
+                "R2": 0.374616,
+                "MAPE": 0.312635
+            },
+            {
+                "max_depth": "10",
+                "MAE": 1.206628,
+                "MSE": 2.387625,
+                "RMSE": 1.545099,
+                "R2": 0.51231,
+                "MAPE": 0.259236
+            },
+            {
+                "max_depth": "20",
+                "MAE": 1.070893,
+                "MSE": 2.049583,
+                "RMSE": 1.431375,
+                "R2": 0.581395,
+                "MAPE": 0.223847
+            },
+            {
+                "max_depth": "None",
+                "MAE": 1.051997,
+                "MSE": 2.098277,
+                "RMSE": 1.448328,
+                "R2": 0.571431,
+                "MAPE": 0.218633
+            }
+        ],
+        "best_rf_max_depth": 20
+    },
+    "candidate": {
+        "algorithm": "Random Forest",
+        "rf_max_depth": 20
+    },
+    "experiment3": {
+        "table": [
+            {
+                "Representation": "Full Engineered Features",
+                "Feature Count": 12,
+                "MAE": 1.043913,
+                "MSE": 1.932388,
+                "RMSE": 1.389757,
+                "R2": 0.605347,
+                "MAPE": 0.219252
+            },
+            {
+                "Representation": "Six Selected Features",
+                "Feature Count": 6,
+                "MAE": 1.070893,
+                "MSE": 2.049583,
+                "RMSE": 1.431375,
+                "R2": 0.581395,
+                "MAPE": 0.223847
+            },
+            {
+                "Representation": "Difference (6 - Full)",
+                "Feature Count": -6,
+                "MAE": 0.02698,
+                "MSE": 0.117195,
+                "RMSE": 0.041618,
+                "R2": -0.023953,
+                "MAPE": 0.004596
+            }
+        ],
+        "difference": {
+            "MAE": 0.026979995503091603,
+            "MSE": 0.11719460947573679,
+            "RMSE": 0.041618136551271334,
+            "R2": -0.023952523063527797,
+            "MAPE": 0.004595663341298545
+        }
+    },
+    "final_test": {
+        "MAE": 1.0788394028207318,
+        "MSE": 2.0960686429076176,
+        "RMSE": 1.4477805921159523,
+        "R2": 0.5701177088445141,
+        "MAPE": 0.2239460989835775
+    },
+    "demos": [
+        {
+            "input": {
+                "Area": 35.0,
+                "Floors": 2.0,
+                "Bedrooms": 2.0,
+                "Bathrooms": 1.0,
+                "Province": "Hà Nội",
+                "District": "Cầu Giấy"
+            },
+            "predicted_price_billion": 3.836663914496358
+        },
+        {
+            "input": {
+                "Area": 70.0,
+                "Floors": 4.0,
+                "Bedrooms": 4.0,
+                "Bathrooms": 3.0,
+                "Province": "Hồ Chí Minh",
+                "District": "Gò Vấp"
+            },
+            "predicted_price_billion": 7.805499987513429
+        },
+        {
+            "input": {
+                "Area": 150.0,
+                "Floors": 5.0,
+                "Bedrooms": 6.0,
+                "Bathrooms": 5.0,
+                "Province": "Đà Nẵng",
+                "District": "Cẩm Lệ"
+            },
+            "predicted_price_billion": 8.336343607929239
+        }
+    ]
+}

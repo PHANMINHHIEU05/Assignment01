@@ -1,0 +1,178 @@
+{
+    "target": "Price",
+    "target_unit": "billion VND",
+    "selected_features": [
+        "Area",
+        "Floors",
+        "Bedrooms",
+        "Bathrooms",
+        "Province",
+        "District"
+    ],
+    "full_engineered_features": [
+        "Area",
+        "Frontage",
+        "Access Road",
+        "House direction",
+        "Balcony direction",
+        "Floors",
+        "Bedrooms",
+        "Bathrooms",
+        "Legal status",
+        "Furniture state",
+        "Province",
+        "District"
+    ],
+    "scientific_final_model": "Random Forest",
+    "model_selection_metric": "RMSE",
+    "models": {
+        "Linear Regression": {
+            "file": "linear_regression.joblib",
+            "scientific_final_model": false,
+            "cv_metrics": {
+                "MAE": 1.3096524098412623,
+                "MSE": 2.802928804623156,
+                "RMSE": 1.6739770272506143,
+                "R2": 0.4276094917994073,
+                "MAPE": 0.28175206958458565
+            },
+            "configuration": {
+                "copy_X": true,
+                "fit_intercept": true,
+                "n_jobs": null,
+                "positive": false,
+                "tol": 1e-06
+            }
+        },
+        "Decision Tree": {
+            "file": "decision_tree.joblib",
+            "scientific_final_model": false,
+            "cv_metrics": {
+                "MAE": 1.226400836694591,
+                "MSE": 3.116083099955625,
+                "RMSE": 1.7650325879087514,
+                "R2": 0.3635220959798806,
+                "MAPE": 0.2497352040855135
+            },
+            "configuration": {
+                "ccp_alpha": 0.0,
+                "criterion": "squared_error",
+                "max_depth": null,
+                "max_features": null,
+                "max_leaf_nodes": null,
+                "min_impurity_decrease": 0.0,
+                "min_samples_leaf": 1,
+                "min_samples_split": 2,
+                "min_weight_fraction_leaf": 0.0,
+                "monotonic_cst": null,
+                "random_state": 42,
+                "splitter": "best"
+            }
+        },
+        "Random Forest": {
+            "file": "random_forest.joblib",
+            "scientific_final_model": true,
+            "cv_metrics": {
+                "MAE": 1.0708927323953759,
+                "MSE": 2.04958300935083,
+                "RMSE": 1.4313749124957378,
+                "R2": 0.5813947965180695,
+                "MAPE": 0.2238473350783027
+            },
+            "configuration": {
+                "bootstrap": true,
+                "ccp_alpha": 0.0,
+                "criterion": "squared_error",
+                "max_depth": 20,
+                "max_features": 1.0,
+                "max_leaf_nodes": null,
+                "max_samples": null,
+                "min_impurity_decrease": 0.0,
+                "min_samples_leaf": 1,
+                "min_samples_split": 2,
+                "min_weight_fraction_leaf": 0.0,
+                "monotonic_cst": null,
+                "n_estimators": 100,
+                "n_jobs": -1,
+                "oob_score": false,
+                "random_state": 42,
+                "verbose": 0,
+                "warm_start": false
+            }
+        },
+        "Extra Trees": {
+            "file": "extra_trees.joblib",
+            "scientific_final_model": false,
+            "cv_metrics": {
+                "MAE": 1.084158044178874,
+                "MSE": 2.3254624918175133,
+                "RMSE": 1.5247050830884792,
+                "R2": 0.5250248007260344,
+                "MAPE": 0.22295129691885265
+            },
+            "configuration": {
+                "bootstrap": false,
+                "ccp_alpha": 0.0,
+                "criterion": "squared_error",
+                "max_depth": null,
+                "max_features": 1.0,
+                "max_leaf_nodes": null,
+                "max_samples": null,
+                "min_impurity_decrease": 0.0,
+                "min_samples_leaf": 1,
+                "min_samples_split": 2,
+                "min_weight_fraction_leaf": 0.0,
+                "monotonic_cst": null,
+                "n_estimators": 100,
+                "n_jobs": -1,
+                "oob_score": false,
+                "random_state": 42,
+                "verbose": 0,
+                "warm_start": false
+            }
+        },
+        "Gradient Boosting": {
+            "file": "gradient_boosting.joblib",
+            "scientific_final_model": false,
+            "cv_metrics": {
+                "MAE": 1.2590808159980127,
+                "MSE": 2.5003952715740825,
+                "RMSE": 1.581189603565392,
+                "R2": 0.48933534752304453,
+                "MAPE": 0.279552948716092
+            },
+            "configuration": {
+                "alpha": 0.9,
+                "ccp_alpha": 0.0,
+                "criterion": "deprecated",
+                "init": null,
+                "learning_rate": 0.1,
+                "loss": "squared_error",
+                "max_depth": 3,
+                "max_features": null,
+                "max_leaf_nodes": null,
+                "min_impurity_decrease": 0.0,
+                "min_samples_leaf": 1,
+                "min_samples_split": 2,
+                "min_weight_fraction_leaf": 0.0,
+                "n_estimators": 100,
+                "n_iter_no_change": null,
+                "random_state": 42,
+                "subsample": 1.0,
+                "tol": 0.0001,
+                "validation_fraction": 0.1,
+                "verbose": 0,
+                "warm_start": false
+            }
+        }
+    },
+    "final_test_metrics": {
+        "model": "Random Forest",
+        "MAE": 1.0788394028207318,
+        "MSE": 2.0960686429076176,
+        "RMSE": 1.4477805921159523,
+        "R2": 0.5701177088445141,
+        "MAPE": 0.2239460989835775
+    },
+    "best_model_file": "best_model.joblib"
+}

@@ -1,0 +1,9 @@
+CREATE CONSTRAINT house_model_name_unique IF NOT EXISTS FOR (m:HouseModel) REQUIRE m.name IS UNIQUE;
+CREATE CONSTRAINT house_feature_name_unique IF NOT EXISTS FOR (f:HouseFeature) REQUIRE f.name IS UNIQUE;
+CREATE CONSTRAINT house_representation_name_unique IF NOT EXISTS FOR (r:HouseRepresentation) REQUIRE r.name IS UNIQUE;
+CREATE CONSTRAINT house_target_name_unique IF NOT EXISTS FOR (t:HouseTarget) REQUIRE t.name IS UNIQUE;
+CREATE CONSTRAINT house_metric_name_unique IF NOT EXISTS FOR (m:HouseMetric) REQUIRE m.name IS UNIQUE;
+CREATE CONSTRAINT house_province_name_unique IF NOT EXISTS FOR (p:HouseProvince) REQUIRE p.name IS UNIQUE;
+CREATE CONSTRAINT house_district_key_unique IF NOT EXISTS FOR (d:HouseDistrict) REQUIRE d.key IS UNIQUE;
+CREATE CONSTRAINT house_observation_id_unique IF NOT EXISTS FOR (o:HouseObservation) REQUIRE o.observation_id IS UNIQUE;
+CREATE CONSTRAINT house_prediction_id_unique IF NOT EXISTS FOR (p:HousePrediction) REQUIRE p.prediction_id IS UNIQUE;

@@ -1,0 +1,10 @@
+{
+    "selected_features": [
+        "Glucose",
+        "BMI",
+        "DiabetesPedigreeFunction",
+        "Age",
+        "Insulin",
+        "BloodPressure"
+    ]
+}

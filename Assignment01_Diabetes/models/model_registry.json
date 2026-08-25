@@ -1,0 +1,65 @@
+{
+    "final_selected_model": "Logistic Regression",
+    "selected_features": [
+        "Glucose",
+        "BMI",
+        "DiabetesPedigreeFunction",
+        "Age",
+        "Insulin",
+        "BloodPressure"
+    ],
+    "models": {
+        "Logistic Regression": {
+            "file": "logistic_regression.joblib",
+            "accuracy_cv": 0.7866,
+            "precision_cv": 0.7434,
+            "recall_cv": 0.598,
+            "f1_cv": 0.662,
+            "scientific_final_model": true,
+            "supports_probability": true
+        },
+        "KNN": {
+            "file": "knn.joblib",
+            "accuracy_cv": 0.7279,
+            "precision_cv": 0.6308,
+            "recall_cv": 0.5651,
+            "f1_cv": 0.5938,
+            "scientific_final_model": false,
+            "supports_probability": true
+        },
+        "Decision Tree": {
+            "file": "decision_tree.joblib",
+            "accuracy_cv": 0.6645,
+            "precision_cv": 0.5186,
+            "recall_cv": 0.5466,
+            "f1_cv": 0.5315,
+            "scientific_final_model": false,
+            "supports_probability": true
+        },
+        "Random Forest": {
+            "file": "random_forest.joblib",
+            "accuracy_cv": 0.7589,
+            "precision_cv": 0.6799,
+            "recall_cv": 0.5934,
+            "f1_cv": 0.6324,
+            "scientific_final_model": false,
+            "supports_probability": true
+        },
+        "SVM": {
+            "file": "svm.joblib",
+            "accuracy_cv": 0.7752,
+            "precision_cv": 0.7328,
+            "recall_cv": 0.5746,
+            "f1_cv": 0.6412,
+            "scientific_final_model": false,
+            "supports_probability": false
+        }
+    },
+    "final_test_metrics": {
+        "model": "Logistic Regression",
+        "accuracy": 0.7208,
+        "precision": 0.6222,
+        "recall": 0.5185,
+        "f1": 0.5657
+    }
+}
