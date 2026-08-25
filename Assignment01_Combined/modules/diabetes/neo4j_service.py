@@ -407,7 +407,20 @@ def get_knowledge_graph_summary():
 
     with create_driver() as driver:
         with driver.session(database=database) as session:
-            return _get_knowledge_graph_summary_in_session(session)
+            summary = _get_knowledge_graph_summary_in_session(session)
+            for label in [
+                "Disease",
+                "RiskFactor",
+                "ClinicalMetric",
+                "GeneralGuidance",
+                "Complication",
+                "MedicalSpecialty",
+                "KnowledgeSource",
+            ]:
+                summary[label] = int(
+                    session.run(f"MATCH (n:{label}) RETURN count(n) AS count").single()["count"]
+                )
+            return summary
 
 
 def _is_missing(value):
@@ -521,3 +534,265 @@ def get_recent_predictions(limit=10):
             )
 
             return [dict(record) for record in records]
+
+
+DIABETES_DOMAIN_CONSTRAINTS = [
+    "CREATE CONSTRAINT disease_id_unique IF NOT EXISTS FOR (d:Disease) REQUIRE d.id IS UNIQUE",
+    "CREATE CONSTRAINT risk_factor_id_unique IF NOT EXISTS FOR (r:RiskFactor) REQUIRE r.id IS UNIQUE",
+    "CREATE CONSTRAINT clinical_metric_id_unique IF NOT EXISTS FOR (m:ClinicalMetric) REQUIRE m.id IS UNIQUE",
+    "CREATE CONSTRAINT general_guidance_id_unique IF NOT EXISTS FOR (g:GeneralGuidance) REQUIRE g.id IS UNIQUE",
+    "CREATE CONSTRAINT complication_id_unique IF NOT EXISTS FOR (c:Complication) REQUIRE c.id IS UNIQUE",
+    "CREATE CONSTRAINT medical_specialty_id_unique IF NOT EXISTS FOR (s:MedicalSpecialty) REQUIRE s.id IS UNIQUE",
+    "CREATE CONSTRAINT knowledge_source_id_unique IF NOT EXISTS FOR (s:KnowledgeSource) REQUIRE s.id IS UNIQUE",
+]
+
+
+DIABETES_SOURCES = [
+    {
+        "id": "cdc_diabetes_risk_factors",
+        "name": "CDC",
+        "title": "Diabetes Risk Factors",
+        "url": "https://www.cdc.gov/diabetes/risk-factors/",
+        "retrieved_at": "2026-08-26",
+        "source_type": "official_public_health",
+    },
+    {
+        "id": "cdc_diabetes_complications",
+        "name": "CDC",
+        "title": "Diabetes Complications",
+        "url": "https://www.cdc.gov/diabetes/complications/index.html",
+        "retrieved_at": "2026-08-26",
+        "source_type": "official_public_health",
+    },
+    {
+        "id": "who_diabetes_fact_sheet",
+        "name": "WHO",
+        "title": "Diabetes fact sheet",
+        "url": "https://www.who.int/news-room/fact-sheets/detail/diabetes",
+        "retrieved_at": "2026-08-26",
+        "source_type": "official_public_health",
+    },
+    {
+        "id": "long_chau_diabetes_lifestyle",
+        "name": "Long Chau",
+        "title": "Nhung thoi xau tiep tay cho benh tieu duong",
+        "url": "https://nhathuoclongchau.com.vn/bai-viet/nhung-thoi-xau-tiep-tay-cho-benh-tieu-duong.html",
+        "retrieved_at": "2026-08-26",
+        "source_type": "medical_education",
+    },
+]
+
+
+DIABETES_DOMAIN_NODES = {
+    "risk_factors": [
+        {"id": "elevated_glucose", "name": "Elevated glucose", "description": "Higher blood glucose is central to diabetes screening and monitoring.", "source_id": "who_diabetes_fact_sheet"},
+        {"id": "higher_bmi", "name": "Higher BMI / overweight", "description": "Overweight and obesity are associated with higher type 2 diabetes risk.", "source_id": "cdc_diabetes_risk_factors"},
+        {"id": "increasing_age", "name": "Increasing age", "description": "Age 45 or older is listed as a risk factor for prediabetes and type 2 diabetes.", "source_id": "cdc_diabetes_risk_factors"},
+        {"id": "family_history", "name": "Family/genetic risk", "description": "Having a parent or sibling with type 2 diabetes is a risk factor.", "source_id": "cdc_diabetes_risk_factors"},
+        {"id": "physical_inactivity", "name": "Physical inactivity", "description": "Low physical activity is associated with higher risk; activity can reduce risk.", "source_id": "cdc_diabetes_risk_factors"},
+    ],
+    "clinical_metrics": [
+        {"id": "glucose_metric", "name": "Glucose", "description": "Blood glucose testing is used for diagnosis and monitoring context.", "source_id": "who_diabetes_fact_sheet"},
+        {"id": "bmi_metric", "name": "BMI", "description": "Body weight context is relevant to type 2 diabetes risk.", "source_id": "cdc_diabetes_risk_factors"},
+        {"id": "blood_pressure_metric", "name": "Blood Pressure", "description": "Blood pressure management is relevant to diabetes complication risk.", "source_id": "cdc_diabetes_complications"},
+    ],
+    "guidance": [
+        {"id": "regular_activity", "name": "Regular physical activity", "description": "General prevention guidance includes regular physical activity.", "source_id": "who_diabetes_fact_sheet"},
+        {"id": "balanced_diet", "name": "Balanced diet", "description": "General guidance includes healthy eating and limiting sugar/saturated fat.", "source_id": "who_diabetes_fact_sheet"},
+        {"id": "weight_management", "name": "Weight management", "description": "Maintaining healthy body weight can help prevent or delay type 2 diabetes.", "source_id": "who_diabetes_fact_sheet"},
+        {"id": "clinical_screening", "name": "Clinical screening when appropriate", "description": "Early detection is supported by regular check-ups and blood tests with a healthcare provider.", "source_id": "who_diabetes_fact_sheet"},
+    ],
+    "complications": [
+        {"id": "cardiovascular_complications", "name": "Cardiovascular complications", "description": "Diabetes is associated with heart attack and stroke risk.", "source_id": "cdc_diabetes_complications"},
+        {"id": "kidney_complications", "name": "Kidney complications", "description": "High blood sugar can damage kidneys and is linked to chronic kidney disease.", "source_id": "cdc_diabetes_complications"},
+        {"id": "eye_complications", "name": "Eye complications", "description": "Diabetes can damage retinal blood vessels and affect vision.", "source_id": "cdc_diabetes_complications"},
+        {"id": "nerve_complications", "name": "Nerve complications", "description": "Nerve damage is a common diabetes complication.", "source_id": "cdc_diabetes_complications"},
+    ],
+    "specialties": [
+        {"id": "endocrinology", "name": "Endocrinology", "description": "Medical specialty related to hormone and metabolic disorders.", "source_id": "who_diabetes_fact_sheet"},
+        {"id": "nutrition", "name": "Nutrition", "description": "Nutrition guidance is relevant to general diabetes education.", "source_id": "long_chau_diabetes_lifestyle"},
+    ],
+}
+
+
+def initialize_diabetes_domain_graph():
+    _uri, _user, _password, database = get_neo4j_config()
+    with create_driver() as driver:
+        with driver.session(database=database) as session:
+            for query in DIABETES_DOMAIN_CONSTRAINTS:
+                session.run(query).consume()
+            session.run(
+                """
+                MERGE (d:Disease {id: 'diabetes_type_2'})
+                SET d.name = 'Type 2 Diabetes',
+                    d.description = 'Educational domain concept connected to the diabetes prediction outcome.'
+                """,
+            ).consume()
+            session.run(
+                """
+                UNWIND $sources AS source
+                MERGE (s:KnowledgeSource {id: source.id})
+                SET s.name = source.name,
+                    s.title = source.title,
+                    s.url = source.url,
+                    s.retrieved_at = source.retrieved_at,
+                    s.source_type = source.source_type
+                """,
+                sources=DIABETES_SOURCES,
+            ).consume()
+            _merge_domain_group(session, "RiskFactor", "HAS_RISK_FACTOR", DIABETES_DOMAIN_NODES["risk_factors"])
+            _merge_domain_group(session, "ClinicalMetric", "HAS_CLINICAL_METRIC", DIABETES_DOMAIN_NODES["clinical_metrics"])
+            _merge_domain_group(session, "GeneralGuidance", "HAS_GENERAL_GUIDANCE", DIABETES_DOMAIN_NODES["guidance"])
+            _merge_domain_group(session, "Complication", "MAY_BE_ASSOCIATED_WITH", DIABETES_DOMAIN_NODES["complications"])
+            _merge_domain_group(session, "MedicalSpecialty", "RELEVANT_SPECIALTY", DIABETES_DOMAIN_NODES["specialties"])
+            session.run(
+                """
+                MATCH (o:Outcome {label: 'Diabetes'})
+                MATCH (d:Disease {id: 'diabetes_type_2'})
+                MERGE (o)-[:RELATED_TO_DISEASE]->(d)
+                """,
+            ).consume()
+            session.run(
+                """
+                MATCH (d:Disease {id: 'diabetes_type_2'})
+                MATCH (s:KnowledgeSource)
+                WHERE s.id IN $source_ids
+                MERGE (d)-[:SUPPORTED_BY_SOURCE]->(s)
+                """,
+                source_ids=[source["id"] for source in DIABETES_SOURCES],
+            ).consume()
+    return get_knowledge_graph_summary()
+
+
+def _merge_domain_group(session, label, relationship, rows):
+    query = f"""
+    UNWIND $rows AS row
+    MERGE (n:{label} {{id: row.id}})
+    SET n.name = row.name,
+        n.description = row.description,
+        n.source_id = row.source_id
+    WITH n, row
+    MATCH (d:Disease {{id: 'diabetes_type_2'}})
+    MERGE (d)-[:{relationship}]->(n)
+    WITH n, row
+    MATCH (s:KnowledgeSource {{id: row.source_id}})
+    MERGE (n)-[:SUPPORTED_BY_SOURCE]->(s)
+    """
+    session.run(query, rows=rows).consume()
+
+
+def get_diabetes_domain_context():
+    _uri, _user, _password, database = get_neo4j_config()
+    with create_driver() as driver:
+        with driver.session(database=database) as session:
+            disease = session.run(
+                "MATCH (d:Disease {id: 'diabetes_type_2'}) RETURN d.name AS name, d.description AS description"
+            ).single()
+            context = {
+                "disease": dict(disease) if disease else {},
+                "risk_factors": _context_rows(session, "RiskFactor"),
+                "clinical_metrics": _context_rows(session, "ClinicalMetric"),
+                "general_guidance": _context_rows(session, "GeneralGuidance"),
+                "complications": _context_rows(session, "Complication"),
+                "specialties": _context_rows(session, "MedicalSpecialty"),
+                "sources": _source_rows(session, "KnowledgeSource"),
+            }
+            return context
+
+
+def _context_rows(session, label):
+    result = session.run(
+        f"""
+        MATCH (:Disease {{id: 'diabetes_type_2'}})-->(n:{label})
+        OPTIONAL MATCH (n)-[:SUPPORTED_BY_SOURCE]->(s:KnowledgeSource)
+        RETURN n.name AS name, n.description AS description, s.name AS source_name, s.url AS source_url
+        ORDER BY n.name
+        LIMIT 12
+        """
+    )
+    return [dict(record) for record in result]
+
+
+def _source_rows(session, label):
+    result = session.run(
+        f"""
+        MATCH (s:{label})
+        RETURN s.name AS name, s.title AS title, s.url AS url, s.source_type AS source_type
+        ORDER BY s.name, s.title
+        LIMIT 10
+        """
+    )
+    return [dict(record) for record in result]
+
+
+def get_system_graph_data():
+    summary = get_knowledge_graph_summary()
+    nodes = [{"id": "condition_diabetes", "label": "Diabetes", "group": "target", "title": "Prediction condition"}]
+    edges = []
+    for model in ["Logistic Regression", "KNN", "Decision Tree", "Random Forest", "SVM"]:
+        node_id = f"model_{model}"
+        nodes.append({"id": node_id, "label": model, "group": "model", "title": f"Classifier: {model}"})
+        edges.append({"source": node_id, "target": "condition_diabetes", "label": "PREDICTS"})
+    for feature in ["Glucose", "BMI", "DiabetesPedigreeFunction", "Age", "Insulin", "BloodPressure"]:
+        node_id = f"feature_{feature}"
+        nodes.append({"id": node_id, "label": feature, "group": "feature", "title": "Model input feature"})
+        for model in ["Logistic Regression", "KNN", "Decision Tree", "Random Forest", "SVM"]:
+            edges.append({"source": f"model_{model}", "target": node_id, "label": "USES_FEATURE"})
+    nodes.append({"id": "representation_six", "label": "Six Feature Representation", "group": "representation", "title": "Deployment representation"})
+    edges.append({"source": "representation_six", "target": "condition_diabetes", "label": "TARGETS"})
+    nodes.append({"id": "metric_summary", "label": f"{summary.get('metrics', 4)} Metrics", "group": "metric", "title": "CV metrics stored in Neo4j"})
+    edges.append({"source": "metric_summary", "target": "model_Logistic Regression", "label": "EVALUATES"})
+    return {"nodes": nodes, "edges": edges}
+
+
+def get_latest_prediction_graph_data():
+    _uri, _user, _password, database = get_neo4j_config()
+    with create_driver() as driver:
+        with driver.session(database=database) as session:
+            record = session.run(
+                """
+                MATCH (obs:Observation)-[:HAS_PREDICTION]->(pred:Prediction)
+                MATCH (pred)-[:PRODUCED_BY]->(model:Model)
+                MATCH (pred)-[:PREDICTED_AS]->(outcome:Outcome)
+                RETURN obs.observation_id AS observation_id,
+                       pred.prediction_id AS prediction_id,
+                       pred.created_at AS created_at,
+                       pred.predicted_class AS predicted_class,
+                       pred.probability AS probability,
+                       pred.decision_score AS decision_score,
+                       model.name AS model_name,
+                       outcome.label AS outcome_label
+                ORDER BY pred.created_at DESC
+                LIMIT 1
+                """
+            ).single()
+    nodes = []
+    edges = []
+    if not record:
+        return {"nodes": nodes, "edges": edges, "latest": None}
+    latest = dict(record)
+    nodes.extend([
+        {"id": "latest_observation", "label": "Observation", "group": "observation", "title": "Latest anonymous observation"},
+        {"id": "latest_prediction", "label": "Prediction", "group": "prediction", "title": f"Created at {latest.get('created_at')}"},
+        {"id": "latest_model", "label": latest["model_name"], "group": "model", "title": "Producing classifier"},
+        {"id": "latest_outcome", "label": latest["outcome_label"], "group": "outcome", "title": "Predicted outcome"},
+    ])
+    edges.extend([
+        {"source": "latest_observation", "target": "latest_prediction", "label": "HAS_PREDICTION"},
+        {"source": "latest_prediction", "target": "latest_model", "label": "PRODUCED_BY"},
+        {"source": "latest_prediction", "target": "latest_outcome", "label": "PREDICTED_AS"},
+    ])
+    if latest["outcome_label"] == "Diabetes":
+        nodes.append({"id": "domain_disease", "label": "Type 2 Diabetes", "group": "disease", "title": "Educational domain concept"})
+        edges.append({"source": "latest_outcome", "target": "domain_disease", "label": "RELATED_TO_DISEASE"})
+        for item in DIABETES_DOMAIN_NODES["risk_factors"][:3]:
+            node_id = f"risk_{item['id']}"
+            nodes.append({"id": node_id, "label": item["name"], "group": "risk", "title": item["description"]})
+            edges.append({"source": "domain_disease", "target": node_id, "label": "HAS_RISK_FACTOR"})
+        for item in DIABETES_DOMAIN_NODES["guidance"][:2]:
+            node_id = f"guidance_{item['id']}"
+            nodes.append({"id": node_id, "label": item["name"], "group": "guidance", "title": item["description"]})
+            edges.append({"source": "domain_disease", "target": node_id, "label": "HAS_GUIDANCE"})
+        nodes.append({"id": "source_cdc", "label": "CDC / WHO Sources", "group": "source", "title": "Authoritative educational sources"})
+        edges.append({"source": "domain_disease", "target": "source_cdc", "label": "SUPPORTED_BY_SOURCE"})
+    return {"nodes": nodes, "edges": edges, "latest": latest}

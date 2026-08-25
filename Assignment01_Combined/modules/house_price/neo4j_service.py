@@ -250,3 +250,167 @@ def get_knowledge_graph_summary():
                 count = session.run(f"MATCH (n:{label}) RETURN count(n) AS count").single()["count"]
                 summary[label] = int(count)
             return summary
+
+
+HOUSE_DOMAIN_CONSTRAINTS = [
+    "CREATE CONSTRAINT house_valuation_factor_id_unique IF NOT EXISTS FOR (f:HouseValuationFactor) REQUIRE f.id IS UNIQUE",
+    "CREATE CONSTRAINT house_knowledge_source_id_unique IF NOT EXISTS FOR (s:HouseKnowledgeSource) REQUIRE s.id IS UNIQUE",
+]
+
+
+HOUSE_SOURCES = [
+    {
+        "id": "kaggle_vietnam_housing_2024",
+        "name": "Kaggle",
+        "title": "House Price Prediction Dataset Vietnam - 2024",
+        "url": "https://www.kaggle.com/datasets/nguyentiennhan/vietnam-housing-dataset-2024",
+        "retrieved_at": "2026-08-26",
+        "source_type": "dataset_source",
+    }
+]
+
+
+HOUSE_FACTORS = [
+    {"id": "area_factor", "name": "Area", "description": "Model input representing property area.", "feature": "Area"},
+    {"id": "floors_factor", "name": "Floors", "description": "Model input representing structural floor count.", "feature": "Floors"},
+    {"id": "bedrooms_factor", "name": "Bedrooms", "description": "Model input representing bedroom count.", "feature": "Bedrooms"},
+    {"id": "bathrooms_factor", "name": "Bathrooms", "description": "Model input representing bathroom count.", "feature": "Bathrooms"},
+    {"id": "province_factor", "name": "Province", "description": "Model input representing broad location.", "feature": "Province"},
+    {"id": "district_factor", "name": "District", "description": "Model input representing district-level location.", "feature": "District"},
+]
+
+
+def initialize_house_domain_graph():
+    _uri, _user, _password, database = get_neo4j_config()
+    with create_driver() as driver:
+        with driver.session(database=database) as session:
+            for query in HOUSE_DOMAIN_CONSTRAINTS:
+                session.run(query).consume()
+            session.run(
+                """
+                UNWIND $sources AS source
+                MERGE (s:HouseKnowledgeSource {id: source.id})
+                SET s.name = source.name,
+                    s.title = source.title,
+                    s.url = source.url,
+                    s.retrieved_at = source.retrieved_at,
+                    s.source_type = source.source_type
+                """,
+                sources=HOUSE_SOURCES,
+            ).consume()
+            session.run(
+                """
+                UNWIND $factors AS factor
+                MERGE (vf:HouseValuationFactor {id: factor.id})
+                SET vf.name = factor.name,
+                    vf.description = factor.description,
+                    vf.feature = factor.feature
+                WITH vf, factor
+                MATCH (target:HouseTarget {name: 'House Price'})
+                MERGE (target)-[:HOUSE_RELATED_TO_FACTOR]->(vf)
+                WITH vf, factor
+                MATCH (feature:HouseFeature {name: factor.feature})
+                MERGE (feature)-[:HOUSE_REPRESENTS_FACTOR]->(vf)
+                WITH vf
+                MATCH (source:HouseKnowledgeSource {id: 'kaggle_vietnam_housing_2024'})
+                MERGE (vf)-[:HOUSE_SUPPORTED_BY_SOURCE]->(source)
+                """,
+                factors=HOUSE_FACTORS,
+            ).consume()
+    return get_knowledge_graph_summary()
+
+
+def get_house_graph_summary():
+    summary = get_knowledge_graph_summary()
+    _uri, _user, _password, database = get_neo4j_config()
+    with create_driver() as driver:
+        with driver.session(database=database) as session:
+            extra = session.run(
+                """
+                MATCH (f:HouseValuationFactor)
+                WITH count(f) AS factors
+                MATCH (s:HouseKnowledgeSource)
+                RETURN factors, count(s) AS sources
+                """
+            ).single()
+    summary["HouseValuationFactor"] = int(extra["factors"]) if extra else 0
+    summary["HouseKnowledgeSource"] = int(extra["sources"]) if extra else 0
+    return summary
+
+
+def get_house_system_graph_data():
+    nodes = [{"id": "house_target", "label": "House Price", "group": "target", "title": "Regression target"}]
+    edges = []
+    models = ["Linear Regression", "Decision Tree", "Random Forest", "Extra Trees", "Gradient Boosting"]
+    features = ["Area", "Floors", "Bedrooms", "Bathrooms", "Province", "District"]
+    nodes.append({"id": "house_representation", "label": "Six Feature Representation", "group": "representation", "title": "Deployment input representation"})
+    edges.append({"source": "house_representation", "target": "house_target", "label": "TARGETS"})
+    for model in models:
+        node_id = f"house_model_{model}"
+        nodes.append({"id": node_id, "label": model, "group": "model", "title": f"Regressor: {model}"})
+        edges.append({"source": node_id, "target": "house_target", "label": "PREDICTS"})
+    for feature in features:
+        node_id = f"house_feature_{feature}"
+        nodes.append({"id": node_id, "label": feature, "group": "feature", "title": "Model input feature"})
+        edges.append({"source": "house_representation", "target": node_id, "label": "INCLUDES"})
+        for model in models:
+            edges.append({"source": f"house_model_{model}", "target": node_id, "label": "USES_FEATURE"})
+    for factor in HOUSE_FACTORS:
+        node_id = f"house_factor_{factor['id']}"
+        nodes.append({"id": node_id, "label": factor["name"], "group": "factor", "title": factor["description"]})
+        edges.append({"source": "house_target", "target": node_id, "label": "RELATED_TO_FACTOR"})
+    nodes.append({"id": "house_source_kaggle", "label": "Kaggle Dataset", "group": "source", "title": HOUSE_SOURCES[0]["url"]})
+    edges.append({"source": "house_target", "target": "house_source_kaggle", "label": "SUPPORTED_BY_SOURCE"})
+    return {"nodes": nodes, "edges": edges}
+
+
+def get_latest_house_prediction_graph_data():
+    _uri, _user, _password, database = get_neo4j_config()
+    with create_driver() as driver:
+        with driver.session(database=database) as session:
+            record = session.run(
+                """
+                MATCH (obs:HouseObservation)-[:HOUSE_HAS_PREDICTION]->(pred:HousePrediction)
+                MATCH (pred)-[:HOUSE_PRODUCED_BY]->(model:HouseModel)
+                MATCH (pred)-[:HOUSE_PREDICTS]->(target:HouseTarget)
+                OPTIONAL MATCH (obs)-[:HOUSE_LOCATED_IN]->(district:HouseDistrict)-[:HOUSE_IN_PROVINCE]->(province:HouseProvince)
+                RETURN obs.observation_id AS observation_id,
+                       pred.prediction_id AS prediction_id,
+                       pred.predicted_price_billion AS predicted_price_billion,
+                       pred.created_at AS created_at,
+                       model.name AS model_name,
+                       target.name AS target_name,
+                       district.name AS district,
+                       province.name AS province
+                ORDER BY pred.created_at DESC
+                LIMIT 1
+                """
+            ).single()
+    nodes = []
+    edges = []
+    if not record:
+        return {"nodes": nodes, "edges": edges, "latest": None}
+    latest = dict(record)
+    nodes.extend([
+        {"id": "house_latest_observation", "label": "HouseObservation", "group": "observation", "title": "Latest anonymous house input"},
+        {"id": "house_latest_prediction", "label": f"{latest['predicted_price_billion']:.2f} B VND", "group": "prediction", "title": f"Created at {latest.get('created_at')}"},
+        {"id": "house_latest_model", "label": latest["model_name"], "group": "model", "title": "Producing regressor"},
+        {"id": "house_latest_target", "label": latest["target_name"], "group": "target", "title": "Predicted target"},
+    ])
+    edges.extend([
+        {"source": "house_latest_observation", "target": "house_latest_prediction", "label": "HAS_PREDICTION"},
+        {"source": "house_latest_prediction", "target": "house_latest_model", "label": "PRODUCED_BY"},
+        {"source": "house_latest_prediction", "target": "house_latest_target", "label": "PREDICTS"},
+    ])
+    if latest.get("district"):
+        nodes.append({"id": "house_latest_district", "label": latest["district"], "group": "location", "title": "District"})
+        edges.append({"source": "house_latest_observation", "target": "house_latest_district", "label": "LOCATED_IN"})
+    if latest.get("province"):
+        nodes.append({"id": "house_latest_province", "label": latest["province"], "group": "location", "title": "Province"})
+        if latest.get("district"):
+            edges.append({"source": "house_latest_district", "target": "house_latest_province", "label": "IN_PROVINCE"})
+    for factor in HOUSE_FACTORS[:6]:
+        node_id = f"latest_factor_{factor['id']}"
+        nodes.append({"id": node_id, "label": factor["name"], "group": "feature", "title": factor["description"]})
+        edges.append({"source": "house_latest_model", "target": node_id, "label": "USES_FEATURE"})
+    return {"nodes": nodes, "edges": edges, "latest": latest}

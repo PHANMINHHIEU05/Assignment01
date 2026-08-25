@@ -14,8 +14,12 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from modules.diabetes.neo4j_service import (  # noqa: E402
+    get_diabetes_domain_context,
     get_knowledge_graph_summary,
     get_recent_predictions,
+    get_latest_prediction_graph_data,
+    get_system_graph_data,
+    initialize_diabetes_domain_graph,
     save_prediction,
     verify_connection,
 )
@@ -37,6 +41,7 @@ from ui.components import (  # noqa: E402
     render_section_header,
     render_status_badge,
 )
+from ui.knowledge_graph import render_network_graph  # noqa: E402
 
 
 MODULE_ROOT = PROJECT_ROOT / "modules" / "diabetes"
@@ -75,6 +80,11 @@ def check_neo4j_status():
         return False
 
 
+@st.cache_data(ttl=3600)
+def ensure_domain_graph():
+    return initialize_diabetes_domain_graph()
+
+
 def detail_table(summary: dict) -> pd.DataFrame:
     return pd.DataFrame(
         [{"Metric": key.replace("_", " ").title(), "Value": value} for key, value in summary.items()]
@@ -86,6 +96,11 @@ selected_features = features_payload["selected_features"]
 registry = load_json_file(REGISTRY_PATH, "model_registry.json")
 model_names = list(registry["models"].keys())
 neo4j_available = check_neo4j_status()
+if neo4j_available:
+    try:
+        ensure_domain_graph()
+    except Exception:
+        pass
 
 with st.sidebar:
     st.markdown("### INTELLIGENT SYSTEM")
@@ -200,53 +215,67 @@ if selected_model_name == registry["final_selected_model"]:
             ]
         )
 
-kg_tab, recent_tab, details_tab = st.tabs(["Knowledge Graph", "Recent Predictions", "Model Details"])
+graph_tab, knowledge_tab, recent_tab, graph_details_tab, details_tab = st.tabs(
+    ["Interactive Graph", "Related Knowledge", "Recent Predictions", "Graph Details", "Model Details"]
+)
 
-with kg_tab:
-    render_section_header("Knowledge Graph Overview", "Schema-level knowledge plus anonymous prediction records.")
+with graph_tab:
+    render_section_header("Interactive Knowledge Graph", "Drag, zoom, pan and hover nodes to inspect ML and domain context.")
     if neo4j_available:
         try:
-            summary = get_knowledge_graph_summary()
-            relationship_total = sum(
-                value
-                for key, value in summary.items()
-                if key not in {"models", "features", "conditions", "representations", "outcomes", "metrics", "observations", "predictions"}
-                and isinstance(value, int)
-            )
-            render_metric_grid(
-                [
-                    ("Models", str(summary.get("models", 0)), "Classifier nodes"),
-                    ("Features", str(summary.get("features", 0)), "Input feature nodes"),
-                    ("Metrics", str(summary.get("metrics", 0)), "Evaluation metrics"),
-                    ("Outcomes", str(summary.get("outcomes", 0)), "No Diabetes / Diabetes"),
-                    ("Predictions", str(summary.get("predictions", 0)), "Anonymous records"),
-                    ("Relationships", str(relationship_total), "Schema links"),
-                ]
-            )
-            render_schema_graph(
-                [
-                    ("Target", [("Diabetes", "target")]),
-                    ("Representation", [("Six Feature Representation", "representation")]),
-                    ("Models", [(name, "model") for name in model_names]),
-                    ("Features", [(feature, "feature") for feature in selected_features]),
-                    ("Outcomes", [("No Diabetes", "outcome"), ("Diabetes", "outcome")]),
-                ]
-            )
-            render_graph_legend(
-                [
-                    ("Model", ""),
-                    ("Feature", "warning"),
-                    ("Target", "success"),
-                    ("Outcome", "warning"),
-                    ("Representation", ""),
-                ]
-            )
-            with st.expander("Advanced Graph Details"):
-                st.table(detail_table(summary))
+            graph_mode = st.radio("Graph view", ["System Graph", "Latest Prediction Context"], horizontal=True)
+            graph_data = get_system_graph_data() if graph_mode == "System Graph" else get_latest_prediction_graph_data()
+            if graph_data.get("nodes"):
+                render_network_graph(graph_data["nodes"], graph_data["edges"], key=f"diabetes-{graph_mode}", height=520)
+                render_graph_legend(
+                    [
+                        ("Model Input", ""),
+                        ("Model", ""),
+                        ("Prediction", ""),
+                        ("Outcome / Target", "warning"),
+                        ("Domain Knowledge", "danger"),
+                        ("Source", ""),
+                    ]
+                )
+                st.caption(
+                    "This graph connects the machine-learning layer with educational diabetes-domain knowledge. "
+                    "Context nodes are not model inputs."
+                )
+            else:
+                render_empty_state("No latest prediction graph yet", "Run a prediction to create an anonymous graph observation.")
         except Exception:
-            render_empty_state("Knowledge Graph temporarily unavailable", "Prediction remains operational.")
+            render_empty_state("Interactive graph unavailable", "Prediction remains operational.")
     else:
         render_empty_state("Knowledge Graph temporarily unavailable", "Prediction system is still operational.")
+
+with knowledge_tab:
+    render_section_header("Related Knowledge", "General educational information connected to the Diabetes outcome.")
+    if neo4j_available:
+        try:
+            context = get_diabetes_domain_context()
+            render_info_banner("This information is educational and does not replace professional medical diagnosis or treatment.")
+            columns = st.columns(2)
+            groups = [
+                ("Risk Factors", context.get("risk_factors", [])),
+                ("Clinical Context", context.get("clinical_metrics", [])),
+                ("General Guidance", context.get("general_guidance", [])),
+                ("Relevant Specialties", context.get("specialties", [])),
+            ]
+            for index, (title, rows) in enumerate(groups):
+                with columns[index % 2]:
+                    render_section_header(title)
+                    for row in rows[:5]:
+                        render_card(row.get("name", "Knowledge"), row.get("name", "Knowledge"), row.get("description", ""))
+            with st.expander("Possible Complications"):
+                for row in context.get("complications", []):
+                    render_card(row.get("name", "Complication"), row.get("name", "Complication"), row.get("description", ""))
+            with st.expander("Sources"):
+                for source in context.get("sources", []):
+                    st.markdown(f"- [{source.get('name')} · {source.get('title')}]({source.get('url')})")
+        except Exception:
+            render_empty_state("Related knowledge unavailable", "The ML prediction workflow remains operational.")
+    else:
+        render_empty_state("Related knowledge unavailable", "Neo4j is currently unavailable.")
 
 with recent_tab:
     render_section_header("Recent Predictions", "Anonymous graph observations without personal identifiers.")
@@ -273,6 +302,35 @@ with recent_tab:
             render_empty_state("Recent predictions unavailable", "The model prediction system remains operational.")
     else:
         render_empty_state("Recent predictions unavailable", "Neo4j is currently unavailable.")
+
+with graph_details_tab:
+    render_section_header("Graph Details", "Technical graph metadata for teacher/demo inspection.")
+    if neo4j_available:
+        try:
+            summary = get_knowledge_graph_summary()
+            relationship_total = sum(
+                value
+                for key, value in summary.items()
+                if key not in {"models", "features", "conditions", "representations", "outcomes", "metrics", "observations", "predictions", "Disease", "RiskFactor", "ClinicalMetric", "GeneralGuidance", "Complication", "MedicalSpecialty", "KnowledgeSource"}
+                and isinstance(value, int)
+            )
+            render_metric_grid(
+                [
+                    ("Models", str(summary.get("models", 0)), "Classifier nodes"),
+                    ("Features", str(summary.get("features", 0)), "Input feature nodes"),
+                    ("Predictions", str(summary.get("predictions", 0)), "Anonymous predictions"),
+                    ("Observations", str(summary.get("observations", 0)), "Anonymous observations"),
+                    ("Metrics", str(summary.get("metrics", 0)), "Metric nodes"),
+                    ("Domain Nodes", str(sum(summary.get(label, 0) for label in ["Disease", "RiskFactor", "ClinicalMetric", "GeneralGuidance", "Complication", "MedicalSpecialty"])), "Context-only knowledge"),
+                    ("Sources", str(summary.get("KnowledgeSource", 0)), "Traceability nodes"),
+                    ("Relationships", str(relationship_total), "Stored links"),
+                ]
+            )
+            st.table(detail_table(summary))
+        except Exception:
+            render_empty_state("Graph details unavailable", "Neo4j metadata could not be loaded.")
+    else:
+        render_empty_state("Graph details unavailable", "Neo4j is currently unavailable.")
 
 with details_tab:
     render_section_header("Model Details", "A compact explanation of the selected deployment artifact.")

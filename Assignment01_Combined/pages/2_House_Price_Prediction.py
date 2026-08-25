@@ -14,8 +14,12 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from modules.house_price.neo4j_service import (  # noqa: E402
+    get_house_graph_summary,
+    get_house_system_graph_data,
     get_knowledge_graph_summary,
     get_recent_predictions,
+    get_latest_house_prediction_graph_data,
+    initialize_house_domain_graph,
     save_prediction,
     verify_connection,
 )
@@ -38,6 +42,7 @@ from ui.components import (  # noqa: E402
     render_section_header,
     render_status_badge,
 )
+from ui.knowledge_graph import render_network_graph  # noqa: E402
 
 
 MODULE_ROOT = PROJECT_ROOT / "modules" / "house_price"
@@ -75,6 +80,11 @@ def check_neo4j_status():
         return False
 
 
+@st.cache_data(ttl=3600)
+def ensure_domain_graph():
+    return initialize_house_domain_graph()
+
+
 def detail_table(summary: dict) -> pd.DataFrame:
     return pd.DataFrame(
         [{"Metric": key.replace("_", " ").title(), "Value": value} for key, value in summary.items()]
@@ -86,6 +96,11 @@ metadata = load_json(METADATA_PATH, "ui_metadata.json")
 selected_features = registry["selected_features"]
 model_names = list(registry["models"].keys())
 neo4j_available = check_neo4j_status()
+if neo4j_available:
+    try:
+        ensure_domain_graph()
+    except Exception:
+        pass
 
 with st.sidebar:
     st.markdown("### INTELLIGENT SYSTEM")
@@ -197,47 +212,52 @@ if selected_model_name == registry["scientific_final_model"]:
             ]
         )
 
-kg_tab, recent_tab, details_tab = st.tabs(["Knowledge Graph", "Recent Predictions", "Model Details"])
+graph_tab, context_tab, recent_tab, graph_details_tab, details_tab = st.tabs(
+    ["Interactive Graph", "Property Context", "Recent Predictions", "Graph Details", "Model Details"]
+)
 
-with kg_tab:
-    render_section_header("Knowledge Graph Overview", "House-prefixed Neo4j labels keep this graph separate from Diabetes.")
+with graph_tab:
+    render_section_header("Interactive Knowledge Graph", "Drag, zoom, pan and hover nodes to inspect model, target and location context.")
     if neo4j_available:
         try:
-            summary = get_knowledge_graph_summary()
-            render_metric_grid(
-                [
-                    ("Models", str(summary.get("HouseModel", 0)), "Regressor nodes"),
-                    ("Features", str(summary.get("HouseFeature", 0)), "Input feature nodes"),
-                    ("Metrics", str(summary.get("HouseMetric", 0)), "Regression metrics"),
-                    ("Provinces", str(summary.get("HouseProvince", 0)), "Location nodes"),
-                    ("Districts", str(summary.get("HouseDistrict", 0)), "Location nodes"),
-                    ("Predictions", str(summary.get("HousePrediction", 0)), "Anonymous records"),
-                ]
-            )
-            render_schema_graph(
-                [
-                    ("Target", [("House Price", "target")]),
-                    ("Representation", [("Six Feature Representation", "representation")]),
-                    ("Features", [(feature, "feature") for feature in selected_features]),
-                    ("Models", [(name, "model") for name in model_names]),
-                    ("Location", [("District", "outcome"), ("Province", "outcome")]),
-                ]
-            )
-            render_graph_legend(
-                [
-                    ("Model", ""),
-                    ("Feature", "warning"),
-                    ("Target", "success"),
-                    ("Location", "warning"),
-                    ("Representation", ""),
-                ]
-            )
-            with st.expander("Advanced Graph Details"):
-                st.table(detail_table(summary))
+            graph_mode = st.radio("Graph view", ["System Graph", "Latest Prediction Graph"], horizontal=True)
+            graph_data = get_house_system_graph_data() if graph_mode == "System Graph" else get_latest_house_prediction_graph_data()
+            if graph_data.get("nodes"):
+                render_network_graph(graph_data["nodes"], graph_data["edges"], key=f"house-{graph_mode}", height=520)
+                render_graph_legend(
+                    [
+                        ("Model Input", ""),
+                        ("Model", ""),
+                        ("Prediction", ""),
+                        ("Target", "success"),
+                        ("Location", "warning"),
+                        ("Source", ""),
+                    ]
+                )
+                st.caption(
+                    "This graph connects the house-price prediction with the producing model, six deployment features, "
+                    "and District to Province hierarchy. Context nodes are not additional model inputs."
+                )
+            else:
+                render_empty_state("No latest prediction graph yet", "Run a prediction to create an anonymous house observation.")
         except Exception:
-            render_empty_state("Knowledge Graph temporarily unavailable", "Prediction remains operational.")
+            render_empty_state("Interactive graph unavailable", "Prediction remains operational.")
     else:
         render_empty_state("Knowledge Graph temporarily unavailable", "Prediction system is still operational.")
+
+with context_tab:
+    render_section_header("Property Context", "Context connected to the current six-feature representation.")
+    render_metric_grid(
+        [
+            ("Province", str(province), "Broad location"),
+            ("District", str(district), "District-level location"),
+            ("Area", f"{area:,.1f} m²", "Model input"),
+            ("Floors", f"{floors:,.0f}", "Model input"),
+            ("Bedrooms", f"{bedrooms:,.0f}", "Model input"),
+            ("Bathrooms", f"{bathrooms:,.0f}", "Model input"),
+        ]
+    )
+    render_info_banner("Valuation factors shown here are factors represented in the model, not official market classifications.")
 
 with recent_tab:
     render_section_header("Recent House Price Predictions", "Anonymous predictions without exact street address.")
@@ -264,6 +284,27 @@ with recent_tab:
             render_empty_state("Recent predictions unavailable", "The model prediction system remains operational.")
     else:
         render_empty_state("Recent predictions unavailable", "Neo4j is currently unavailable.")
+
+with graph_details_tab:
+    render_section_header("Graph Details", "Technical graph metadata for teacher/demo inspection.")
+    if neo4j_available:
+        try:
+            summary = get_house_graph_summary()
+            render_metric_grid(
+                [
+                    ("Models", str(summary.get("HouseModel", 0)), "Regressor nodes"),
+                    ("Features", str(summary.get("HouseFeature", 0)), "Input feature nodes"),
+                    ("Predictions", str(summary.get("HousePrediction", 0)), "Anonymous predictions"),
+                    ("Districts", str(summary.get("HouseDistrict", 0)), "Location nodes"),
+                    ("Domain Factors", str(summary.get("HouseValuationFactor", 0)), "Context-only factor nodes"),
+                    ("Sources", str(summary.get("HouseKnowledgeSource", 0)), "Traceability nodes"),
+                ]
+            )
+            st.table(detail_table(summary))
+        except Exception:
+            render_empty_state("Graph details unavailable", "Neo4j metadata could not be loaded.")
+    else:
+        render_empty_state("Graph details unavailable", "Neo4j is currently unavailable.")
 
 with details_tab:
     render_section_header("Model Details", "A compact explanation of the selected deployment artifact.")

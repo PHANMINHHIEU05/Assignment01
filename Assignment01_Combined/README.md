@@ -52,3 +52,69 @@ Do not commit `.env` or Streamlit secrets.
 ```
 
 Both domains may use one AuraDB instance. Diabetes labels and House-prefixed labels are kept separate.
+
+## Hybrid Knowledge Graph
+
+The deployed application uses a hybrid Neo4j Knowledge Graph with three layers.
+
+Layer 1: Machine Learning System Knowledge
+
+- models
+- selected features
+- metrics
+- representations
+- targets/outcomes
+- saved prediction artifacts
+
+Layer 2: Domain Knowledge
+
+Diabetes:
+
+- Type 2 Diabetes domain concept
+- risk factors
+- clinical concepts
+- general educational guidance
+- complications
+- medical specialties
+- source attribution
+
+House Price:
+
+- geographic hierarchy: District -> Province
+- valuation feature concepts represented in the model
+- house price target context
+- dataset source attribution
+
+Layer 3: Dynamic Prediction Knowledge
+
+- anonymous observation
+- prediction node
+- producing model
+- predicted outcome or target
+- location context for house price predictions
+
+```text
+                         NEO4J AURADB
+                              |
+            +-----------------+----------------+
+            |                                  |
+     ML SYSTEM GRAPH                    DOMAIN GRAPH
+            |                                  |
+ Models -> Features                       Diabetes
+ Metrics -> Models                       /   |    \
+ Representations                  RiskFactor Guidance Source
+            |                                  |
+            +-------- Prediction --------------+
+
+House:
+
+Model -> Features
+   |
+Prediction
+   |
+House Target
+   |
+District -> Province
+```
+
+The Streamlit UI renders graph data as interactive PyVis node-edge networks. The graph can be dragged, zoomed, panned and inspected with hover tooltips. Domain context is educational only and does not replace professional medical or property valuation advice.
