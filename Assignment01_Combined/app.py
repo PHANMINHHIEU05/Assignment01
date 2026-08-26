@@ -50,7 +50,7 @@ with right:
     render_card(
         "Vietnam House Price Prediction",
         "Regression",
-        "5 regressors · Random Forest final model · 6 selected features · Vietnam Housing Dataset 2024",
+        "5 regressors · Random Forest final model · 11 selected features · Vietnam Housing Dataset 2024",
     )
     st.page_link("pages/2_House_Price_Prediction.py", label="Open House Price System", use_container_width=True)
 

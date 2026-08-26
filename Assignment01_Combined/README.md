@@ -81,6 +81,7 @@ Diabetes:
 House Price:
 
 - geographic hierarchy: District -> Province
+- 11 active model features, including Location parsed as District, Province
 - valuation feature concepts represented in the model
 - house price target context
 - dataset source attribution

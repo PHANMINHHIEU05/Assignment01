@@ -1,15 +1,8 @@
 {
     "target": "Price",
     "target_unit": "billion VND",
+    "feature_count": 11,
     "selected_features": [
-        "Area",
-        "Floors",
-        "Bedrooms",
-        "Bathrooms",
-        "Province",
-        "District"
-    ],
-    "full_engineered_features": [
         "Area",
         "Frontage",
         "Access Road",
@@ -20,21 +13,23 @@
         "Bathrooms",
         "Legal status",
         "Furniture state",
-        "Province",
-        "District"
+        "Location"
     ],
+    "representation_version": "house_11_feature_v2",
+    "legacy_note": "Previous six-feature House Price representation is superseded.",
     "scientific_final_model": "Random Forest",
     "model_selection_metric": "RMSE",
+    "best_model_file": "best_model.joblib",
     "models": {
         "Linear Regression": {
             "file": "linear_regression.joblib",
             "scientific_final_model": false,
             "cv_metrics": {
-                "MAE": 1.3096524098412623,
-                "MSE": 2.802928804623156,
-                "RMSE": 1.6739770272506143,
-                "R2": 0.4276094917994073,
-                "MAPE": 0.28175206958458565
+                "MAE": 1.2902631992278923,
+                "MSE": 2.732970375137627,
+                "RMSE": 1.6529974263688785,
+                "R2": 0.44187174139651636,
+                "MAPE": 0.27711148397718627
             },
             "configuration": {
                 "copy_X": true,
@@ -48,11 +43,11 @@
             "file": "decision_tree.joblib",
             "scientific_final_model": false,
             "cv_metrics": {
-                "MAE": 1.226400836694591,
-                "MSE": 3.116083099955625,
-                "RMSE": 1.7650325879087514,
-                "R2": 0.3635220959798806,
-                "MAPE": 0.2497352040855135
+                "MAE": 1.3247596554560779,
+                "MSE": 3.520240518416994,
+                "RMSE": 1.876019956628069,
+                "R2": 0.2811035909258807,
+                "MAPE": 0.2729095911668774
             },
             "configuration": {
                 "ccp_alpha": 0.0,
@@ -73,17 +68,17 @@
             "file": "random_forest.joblib",
             "scientific_final_model": true,
             "cv_metrics": {
-                "MAE": 1.0708927323953759,
-                "MSE": 2.04958300935083,
-                "RMSE": 1.4313749124957378,
-                "R2": 0.5813947965180695,
-                "MAPE": 0.2238473350783027
+                "MAE": 1.0569265924399793,
+                "MSE": 2.0477374356404257,
+                "RMSE": 1.430669738199871,
+                "R2": 0.5818011148049183,
+                "MAPE": 0.22624310142240373
             },
             "configuration": {
                 "bootstrap": true,
                 "ccp_alpha": 0.0,
                 "criterion": "squared_error",
-                "max_depth": 20,
+                "max_depth": null,
                 "max_features": 1.0,
                 "max_leaf_nodes": null,
                 "max_samples": null,
@@ -104,11 +99,11 @@
             "file": "extra_trees.joblib",
             "scientific_final_model": false,
             "cv_metrics": {
-                "MAE": 1.084158044178874,
-                "MSE": 2.3254624918175133,
-                "RMSE": 1.5247050830884792,
-                "R2": 0.5250248007260344,
-                "MAPE": 0.22295129691885265
+                "MAE": 1.0662233818071847,
+                "MSE": 2.1478443085624237,
+                "RMSE": 1.4651234159794804,
+                "R2": 0.5613823985543288,
+                "MAPE": 0.22564230663449472
             },
             "configuration": {
                 "bootstrap": false,
@@ -135,11 +130,11 @@
             "file": "gradient_boosting.joblib",
             "scientific_final_model": false,
             "cv_metrics": {
-                "MAE": 1.2590808159980127,
-                "MSE": 2.5003952715740825,
-                "RMSE": 1.581189603565392,
-                "R2": 0.48933534752304453,
-                "MAPE": 0.279552948716092
+                "MAE": 1.318503367220559,
+                "MSE": 2.702899021865874,
+                "RMSE": 1.6439503759556184,
+                "R2": 0.4479926503835315,
+                "MAPE": 0.29856071984032073
             },
             "configuration": {
                 "alpha": 0.9,
@@ -168,11 +163,10 @@
     },
     "final_test_metrics": {
         "model": "Random Forest",
-        "MAE": 1.0788394028207318,
-        "MSE": 2.0960686429076176,
-        "RMSE": 1.4477805921159523,
-        "R2": 0.5701177088445141,
-        "MAPE": 0.2239460989835775
-    },
-    "best_model_file": "best_model.joblib"
+        "MAE": 1.0430866397189427,
+        "MSE": 2.037063937085603,
+        "RMSE": 1.4272574880117475,
+        "R2": 0.5822189719465359,
+        "MAPE": 0.2213850409823706
+    }
 }

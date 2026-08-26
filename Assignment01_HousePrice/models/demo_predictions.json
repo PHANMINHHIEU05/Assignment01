@@ -2,34 +2,49 @@
     {
         "input": {
             "Area": 35.0,
+            "Frontage": 4.0,
+            "Access Road": 3.0,
+            "House direction": "Đông",
+            "Balcony direction": "Not provided",
             "Floors": 2.0,
             "Bedrooms": 2.0,
             "Bathrooms": 1.0,
-            "Province": "Hà Nội",
-            "District": "Cầu Giấy"
+            "Legal status": "Sổ đỏ/ Sổ hồng",
+            "Furniture state": "Cơ bản",
+            "Location": "Cầu Giấy, Hà Nội"
         },
-        "predicted_price_billion": 3.836663914496358
+        "predicted_price_billion": 2.6797999999999997
     },
     {
         "input": {
             "Area": 70.0,
+            "Frontage": 5.0,
+            "Access Road": 6.0,
+            "House direction": "Nam",
+            "Balcony direction": "Đông Nam",
             "Floors": 4.0,
             "Bedrooms": 4.0,
             "Bathrooms": 3.0,
-            "Province": "Hồ Chí Minh",
-            "District": "Gò Vấp"
+            "Legal status": "Sổ đỏ/ Sổ hồng",
+            "Furniture state": "Đầy đủ",
+            "Location": "Gò Vấp, Hồ Chí Minh"
         },
-        "predicted_price_billion": 7.805499987513429
+        "predicted_price_billion": 7.078500000000004
     },
     {
         "input": {
             "Area": 150.0,
+            "Frontage": 8.0,
+            "Access Road": 10.0,
+            "House direction": "Tây",
+            "Balcony direction": "Not provided",
             "Floors": 5.0,
             "Bedrooms": 6.0,
             "Bathrooms": 5.0,
-            "Province": "Đà Nẵng",
-            "District": "Cẩm Lệ"
+            "Legal status": "Sổ đỏ/ Sổ hồng",
+            "Furniture state": "Đầy đủ",
+            "Location": "Cẩm Lệ, Đà Nẵng"
         },
-        "predicted_price_billion": 8.336343607929239
+        "predicted_price_billion": 7.994400000000001
     }
 ]

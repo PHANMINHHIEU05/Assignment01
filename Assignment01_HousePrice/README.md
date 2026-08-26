@@ -7,9 +7,9 @@ This project is a supervised regression system that estimates house listing pric
 
 ## Features
 
-Full engineered features: Area, Frontage, Access Road, House direction, Balcony direction, Floors, Bedrooms, Bathrooms, Legal status, Furniture state, Province, District.
+Active model features: Area, Frontage, Access Road, House direction, Balcony direction, Floors, Bedrooms, Bathrooms, Legal status, Furniture state, Location.
 
-Final deployed six features: Area, Floors, Bedrooms, Bathrooms, Province, District.
+`Location` is parsed from Address as `District, Province`. Raw Address is not used as a model input. District and Province are retained only as Neo4j geographic context.
 
 ## Models
 
@@ -19,9 +19,9 @@ Metrics: MAE, MSE, RMSE, R2, MAPE. Primary selection metric: RMSE.
 
 Controlled experiments:
 
-1. Five-model comparison using six features.
+1. Five-model comparison using eleven features.
 2. Random Forest max_depth investigation.
-3. Full 12 engineered features vs six selected features.
+3. Ten features without Location vs eleven features with Location.
 
 ## Run Locally
 
@@ -46,4 +46,4 @@ The Streamlit layout is browser based and usable from desktop and mobile browser
 
 ## Limitations
 
-The dataset contains listings, not necessarily transaction prices. The data represents 2024 market conditions. Province/District extraction is simplified. Several raw attributes contain substantial missing data. The six-feature deployed representation is a simplification.
+The dataset contains listings, not necessarily transaction prices. The data represents 2024 market conditions. Location extraction is simplified. Several raw attributes contain substantial missing data. Predictions are not official valuations.

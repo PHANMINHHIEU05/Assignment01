@@ -143,8 +143,9 @@
                 "max": 11.5
             }
         },
-        "province_count": 77,
+        "province_count": 74,
         "district_count": 342,
+        "location_count": 354,
         "top_provinces": {
             "Hồ Chí Minh": 11778,
             "Hà Nội": 10461,
@@ -166,7 +167,19 @@
         "figures/05_top_provinces_distribution.png"
     ],
     "features": {
-        "full": [
+        "representation_10": [
+            "Area",
+            "Frontage",
+            "Access Road",
+            "House direction",
+            "Balcony direction",
+            "Floors",
+            "Bedrooms",
+            "Bathrooms",
+            "Legal status",
+            "Furniture state"
+        ],
+        "representation_11": [
             "Area",
             "Frontage",
             "Access Road",
@@ -177,16 +190,7 @@
             "Bathrooms",
             "Legal status",
             "Furniture state",
-            "Province",
-            "District"
-        ],
-        "selected": [
-            "Area",
-            "Floors",
-            "Bedrooms",
-            "Bathrooms",
-            "Province",
-            "District"
+            "Location"
         ]
     },
     "split": {
@@ -194,6 +198,12 @@
         "test_rows": 6046,
         "test_size": 0.2,
         "random_state": 42
+    },
+    "memory_check": {
+        "province_count": 74,
+        "district_count": 342,
+        "location_count": 354,
+        "encoded_dimensionality": 146
     },
     "baseline": {
         "full": {
@@ -220,110 +230,110 @@
         "full_table": [
             {
                 "Model": "Linear Regression",
-                "MAE Mean": 1.309652,
-                "MAE Std": 0.017257,
-                "MSE Mean": 2.802929,
-                "MSE Std": 0.090146,
-                "RMSE Mean": 1.673977,
-                "RMSE Std": 0.027013,
-                "R2 Mean": 0.427609,
-                "R2 Std": 0.014437,
-                "MAPE Mean": 0.281752,
-                "MAPE Std": 0.006526
+                "MAE Mean": 1.290263,
+                "MAE Std": 0.015873,
+                "MSE Mean": 2.73297,
+                "MSE Std": 0.078635,
+                "RMSE Mean": 1.652997,
+                "RMSE Std": 0.023872,
+                "R2 Mean": 0.441872,
+                "R2 Std": 0.012678,
+                "MAPE Mean": 0.277111,
+                "MAPE Std": 0.006162
             },
             {
                 "Model": "Decision Tree",
-                "MAE Mean": 1.226401,
-                "MAE Std": 0.015139,
-                "MSE Mean": 3.116083,
-                "MSE Std": 0.097218,
-                "RMSE Mean": 1.765033,
-                "RMSE Std": 0.027259,
-                "R2 Mean": 0.363522,
-                "R2 Std": 0.019922,
-                "MAPE Mean": 0.249735,
-                "MAPE Std": 0.007565
+                "MAE Mean": 1.32476,
+                "MAE Std": 0.017176,
+                "MSE Mean": 3.520241,
+                "MSE Std": 0.105278,
+                "RMSE Mean": 1.87602,
+                "RMSE Std": 0.028101,
+                "R2 Mean": 0.281104,
+                "R2 Std": 0.016913,
+                "MAPE Mean": 0.27291,
+                "MAPE Std": 0.006611
             },
             {
                 "Model": "Random Forest",
-                "MAE Mean": 1.051997,
-                "MAE Std": 0.014931,
-                "MSE Mean": 2.098277,
-                "MSE Std": 0.072581,
-                "RMSE Mean": 1.448328,
-                "RMSE Std": 0.02497,
-                "R2 Mean": 0.571431,
-                "R2 Std": 0.014493,
-                "MAPE Mean": 0.218633,
-                "MAPE Std": 0.006139
+                "MAE Mean": 1.056927,
+                "MAE Std": 0.018805,
+                "MSE Mean": 2.047737,
+                "MSE Std": 0.08676,
+                "RMSE Mean": 1.43067,
+                "RMSE Std": 0.030357,
+                "R2 Mean": 0.581801,
+                "R2 Std": 0.016438,
+                "MAPE Mean": 0.226243,
+                "MAPE Std": 0.005755
             },
             {
                 "Model": "Extra Trees",
-                "MAE Mean": 1.084158,
-                "MAE Std": 0.015325,
-                "MSE Mean": 2.325462,
-                "MSE Std": 0.08292,
-                "RMSE Mean": 1.524705,
-                "RMSE Std": 0.027146,
-                "R2 Mean": 0.525025,
-                "R2 Std": 0.016746,
-                "MAPE Mean": 0.222951,
-                "MAPE Std": 0.00629
+                "MAE Mean": 1.066223,
+                "MAE Std": 0.022201,
+                "MSE Mean": 2.147844,
+                "MSE Std": 0.103767,
+                "RMSE Mean": 1.465123,
+                "RMSE Std": 0.035464,
+                "R2 Mean": 0.561382,
+                "R2 Std": 0.019488,
+                "MAPE Mean": 0.225642,
+                "MAPE Std": 0.006265
             },
             {
                 "Model": "Gradient Boosting",
-                "MAE Mean": 1.259081,
-                "MAE Std": 0.012091,
-                "MSE Mean": 2.500395,
-                "MSE Std": 0.048356,
-                "RMSE Mean": 1.58119,
-                "RMSE Std": 0.01532,
-                "R2 Mean": 0.489335,
-                "R2 Std": 0.006913,
-                "MAPE Mean": 0.279553,
-                "MAPE Std": 0.006106
+                "MAE Mean": 1.318503,
+                "MAE Std": 0.010166,
+                "MSE Mean": 2.702899,
+                "MSE Std": 0.059131,
+                "RMSE Mean": 1.64395,
+                "RMSE Std": 0.018061,
+                "R2 Mean": 0.447993,
+                "R2 Std": 0.008464,
+                "MAPE Mean": 0.298561,
+                "MAPE Std": 0.005417
             }
         ],
         "compact_table": [
             {
                 "Model": "Linear Regression",
-                "MAE": 1.309652,
-                "MSE": 2.802929,
-                "RMSE": 1.673977,
-                "R2": 0.427609,
-                "MAPE": 0.281752
+                "MAE": 1.290263,
+                "MSE": 2.73297,
+                "RMSE": 1.652997,
+                "R2": 0.441872,
+                "MAPE": 0.277111
             },
             {
                 "Model": "Decision Tree",
-                "MAE": 1.226401,
-                "MSE": 3.116083,
-                "RMSE": 1.765033,
-                "R2": 0.363522,
-                "MAPE": 0.249735
+                "MAE": 1.32476,
+                "MSE": 3.520241,
+                "RMSE": 1.87602,
+                "R2": 0.281104,
+                "MAPE": 0.27291
             },
             {
                 "Model": "Random Forest",
-                "MAE": 1.051997,
-                "MSE": 2.098277,
-                "RMSE": 1.448328,
-                "R2": 0.571431,
-                "MAPE": 0.218633
+                "MAE": 1.056927,
+                "MSE": 2.047737,
+                "RMSE": 1.43067,
+                "R2": 0.581801,
+                "MAPE": 0.226243
             },
             {
                 "Model": "Extra Trees",
-                "MAE": 1.084158,
-                "MSE": 2.325462,
-                "RMSE": 1.524705,
-                "R2": 0.525025,
-                "MAPE": 0.222951
+                "MAE": 1.066223,
+                "MSE": 2.147844,
+                "RMSE": 1.465123,
+                "R2": 0.561382,
+                "MAPE": 0.225642
             },
             {
                 "Model": "Gradient Boosting",
-                "MAE": 1.259081,
-                "MSE": 2.500395,
-                "RMSE": 1.58119,
-                "R2": 0.489335,
-                "MAPE": 0.279553
+                "MAE": 1.318503,
+                "MSE": 2.702899,
+                "RMSE": 1.64395,
+                "R2": 0.447993,
+                "MAPE": 0.298561
             }
         ],
         "best_model": "Random Forest"
@@ -332,121 +342,144 @@
         "table": [
             {
                 "max_depth": "5",
-                "MAE": 1.398798,
-                "MSE": 3.061783,
-                "RMSE": 1.749748,
-                "R2": 0.374616,
-                "MAPE": 0.312635
+                "MAE": 1.477348,
+                "MSE": 3.366643,
+                "RMSE": 1.834775,
+                "R2": 0.312389,
+                "MAPE": 0.337814
             },
             {
                 "max_depth": "10",
-                "MAE": 1.206628,
-                "MSE": 2.387625,
-                "RMSE": 1.545099,
-                "R2": 0.51231,
-                "MAPE": 0.259236
+                "MAE": 1.324146,
+                "MSE": 2.822257,
+                "RMSE": 1.679832,
+                "R2": 0.423569,
+                "MAPE": 0.295574
             },
             {
                 "max_depth": "20",
-                "MAE": 1.070893,
-                "MSE": 2.049583,
-                "RMSE": 1.431375,
-                "R2": 0.581395,
-                "MAPE": 0.223847
+                "MAE": 1.164625,
+                "MSE": 2.30834,
+                "RMSE": 1.519068,
+                "R2": 0.528582,
+                "MAPE": 0.253809
             },
             {
                 "max_depth": "None",
-                "MAE": 1.051997,
-                "MSE": 2.098277,
-                "RMSE": 1.448328,
-                "R2": 0.571431,
-                "MAPE": 0.218633
+                "MAE": 1.056927,
+                "MSE": 2.047737,
+                "RMSE": 1.43067,
+                "R2": 0.581801,
+                "MAPE": 0.226243
             }
         ],
-        "best_rf_max_depth": 20
+        "best_rf_max_depth": "None"
     },
     "candidate": {
         "algorithm": "Random Forest",
-        "rf_max_depth": 20
+        "rf_max_depth": "None"
     },
     "experiment3": {
         "table": [
             {
-                "Representation": "Full Engineered Features",
-                "Feature Count": 12,
-                "MAE": 1.043913,
-                "MSE": 1.932388,
-                "RMSE": 1.389757,
-                "R2": 0.605347,
-                "MAPE": 0.219252
+                "Representation": "10 Without Location",
+                "Feature Count": 10,
+                "MAE": 1.447735,
+                "MSE": 3.459552,
+                "RMSE": 1.859925,
+                "R2": 0.293409,
+                "MAPE": 0.324656
             },
             {
-                "Representation": "Six Selected Features",
-                "Feature Count": 6,
-                "MAE": 1.070893,
-                "MSE": 2.049583,
-                "RMSE": 1.431375,
-                "R2": 0.581395,
-                "MAPE": 0.223847
+                "Representation": "11 With Location",
+                "Feature Count": 11,
+                "MAE": 1.056927,
+                "MSE": 2.047737,
+                "RMSE": 1.43067,
+                "R2": 0.581801,
+                "MAPE": 0.226243
             },
             {
-                "Representation": "Difference (6 - Full)",
-                "Feature Count": -6,
-                "MAE": 0.02698,
-                "MSE": 0.117195,
-                "RMSE": 0.041618,
-                "R2": -0.023953,
-                "MAPE": 0.004596
+                "Representation": "Difference (11 - 10)",
+                "Feature Count": 1,
+                "MAE": -0.390808,
+                "MSE": -1.411814,
+                "RMSE": -0.429256,
+                "R2": 0.288392,
+                "MAPE": -0.098413
             }
         ],
         "difference": {
-            "MAE": 0.026979995503091603,
-            "MSE": 0.11719460947573679,
-            "RMSE": 0.041618136551271334,
-            "R2": -0.023952523063527797,
-            "MAPE": 0.004595663341298545
+            "MAE": -0.3908080113664105,
+            "MSE": -1.4118140651495859,
+            "RMSE": -0.4292555244999321,
+            "R2": 0.2883920499679528,
+            "MAPE": -0.09841283093155856
         }
     },
     "final_test": {
-        "MAE": 1.0788394028207318,
-        "MSE": 2.0960686429076176,
-        "RMSE": 1.4477805921159523,
-        "R2": 0.5701177088445141,
-        "MAPE": 0.2239460989835775
+        "MAE": 1.0430866397189427,
+        "MSE": 2.037063937085603,
+        "RMSE": 1.4272574880117475,
+        "R2": 0.5822189719465359,
+        "MAPE": 0.2213850409823706
     },
     "demos": [
         {
             "input": {
                 "Area": 35.0,
+                "Frontage": 4.0,
+                "Access Road": 3.0,
+                "House direction": "Đông",
+                "Balcony direction": "Not provided",
                 "Floors": 2.0,
                 "Bedrooms": 2.0,
                 "Bathrooms": 1.0,
-                "Province": "Hà Nội",
-                "District": "Cầu Giấy"
+                "Legal status": "Sổ đỏ/ Sổ hồng",
+                "Furniture state": "Cơ bản",
+                "Location": "Cầu Giấy, Hà Nội"
             },
-            "predicted_price_billion": 3.836663914496358
+            "predicted_price_billion": 2.6797999999999997
         },
         {
             "input": {
                 "Area": 70.0,
+                "Frontage": 5.0,
+                "Access Road": 6.0,
+                "House direction": "Nam",
+                "Balcony direction": "Đông Nam",
                 "Floors": 4.0,
                 "Bedrooms": 4.0,
                 "Bathrooms": 3.0,
-                "Province": "Hồ Chí Minh",
-                "District": "Gò Vấp"
+                "Legal status": "Sổ đỏ/ Sổ hồng",
+                "Furniture state": "Đầy đủ",
+                "Location": "Gò Vấp, Hồ Chí Minh"
             },
-            "predicted_price_billion": 7.805499987513429
+            "predicted_price_billion": 7.078500000000004
         },
         {
             "input": {
                 "Area": 150.0,
+                "Frontage": 8.0,
+                "Access Road": 10.0,
+                "House direction": "Tây",
+                "Balcony direction": "Not provided",
                 "Floors": 5.0,
                 "Bedrooms": 6.0,
                 "Bathrooms": 5.0,
-                "Province": "Đà Nẵng",
-                "District": "Cẩm Lệ"
+                "Legal status": "Sổ đỏ/ Sổ hồng",
+                "Furniture state": "Đầy đủ",
+                "Location": "Cẩm Lệ, Đà Nẵng"
             },
-            "predicted_price_billion": 8.336343607929239
+            "predicted_price_billion": 7.994400000000001
         }
-    ]
+    ],
+    "artifact_sizes_bytes": {
+        "linear_regression.joblib": 7360,
+        "decision_tree.joblib": 408336,
+        "gradient_boosting.joblib": 40276,
+        "random_forest.joblib": 27886688,
+        "extra_trees.joblib": 53909716,
+        "best_model.joblib": 27886688
+    }
 }

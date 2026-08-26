@@ -16,9 +16,9 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from modules.house_price.neo4j_service import (  # noqa: E402
     get_house_graph_summary,
     get_house_system_graph_data,
-    get_knowledge_graph_summary,
-    get_recent_predictions,
     get_latest_house_prediction_graph_data,
+    get_recent_predictions,
+    initialize_graph,
     initialize_house_domain_graph,
     save_prediction,
     verify_connection,
@@ -38,7 +38,6 @@ from ui.components import (  # noqa: E402
     render_page_header,
     render_prediction_card,
     render_recent_prediction_card,
-    render_schema_graph,
     render_section_header,
     render_status_badge,
 )
@@ -81,7 +80,8 @@ def check_neo4j_status():
 
 
 @st.cache_data(ttl=3600)
-def ensure_domain_graph():
+def ensure_house_graph(registry_payload: dict, metadata_payload: dict):
+    initialize_graph(registry_payload, metadata_payload)
     return initialize_house_domain_graph()
 
 
@@ -91,6 +91,35 @@ def detail_table(summary: dict) -> pd.DataFrame:
     )
 
 
+def optional_numeric(label: str, feature: str, ranges: dict):
+    feature_range = ranges[feature]
+    value = st.number_input(
+        label,
+        min_value=0.0,
+        max_value=max(1000.0, float(feature_range["max"])),
+        value=float(feature_range["median"]),
+        step=1.0,
+        help="Enter 0 if unavailable in the listing.",
+    )
+    return np.nan if value == 0 else value
+
+
+def optional_choice(label: str, feature: str, metadata: dict):
+    missing_label = metadata.get("missing_label", "Not provided")
+    choices = metadata["categorical_choices"].get(feature, [])
+    options = [missing_label] + [choice for choice in choices if choice != missing_label]
+    value = st.selectbox(label, options)
+    return np.nan if value == missing_label else value
+
+
+def display_value(value, suffix: str = ""):
+    if pd.isna(value):
+        return "Not provided"
+    if isinstance(value, float):
+        return f"{value:,.1f}{suffix}"
+    return str(value)
+
+
 registry = load_json(REGISTRY_PATH, "model_registry.json")
 metadata = load_json(METADATA_PATH, "ui_metadata.json")
 selected_features = registry["selected_features"]
@@ -98,7 +127,7 @@ model_names = list(registry["models"].keys())
 neo4j_available = check_neo4j_status()
 if neo4j_available:
     try:
-        ensure_domain_graph()
+        ensure_house_graph(registry, metadata)
     except Exception:
         pass
 
@@ -117,8 +146,8 @@ with st.sidebar:
 render_page_header(
     "Vietnam House Price",
     "Vietnam House Price Prediction",
-    "Machine-learning regression for estimating residential property prices from structured property information.",
-    ["Regression", "6 Features", "Vietnam Housing Dataset 2024"],
+    "Machine-learning regression for estimating residential property prices from 11 structured property features.",
+    ["Regression", "11 Features", "Vietnam Housing Dataset 2024"],
 )
 render_info_banner("Educational model estimate. Not an official property valuation.")
 
@@ -128,37 +157,53 @@ with overview_cols[0]:
 with overview_cols[1]:
     render_card("Problem", "Regression", "Predicts continuous price")
 with overview_cols[2]:
-    render_card("Representation", "6 Features", "Area, structure and location")
+    render_card("Representation", "11 Features", "Physical, legal, furnishing and location inputs")
 with overview_cols[3]:
     render_card("Target", "House Price", "billion VND")
 
-render_section_header("Property Features", "Select location and enter the physical property attributes used by the saved model.")
+render_section_header("Property Features", "Enter the 11 active features used by the saved model. Address itself is not used.")
 ranges = metadata["numeric_ranges"]
 with st.container(border=True):
-    loc_1, loc_2 = st.columns(2)
-    with loc_1:
-        province = st.selectbox("Province", metadata["provinces"], help="Broad location feature extracted from Address.")
-    with loc_2:
-        district = st.selectbox("District", metadata["province_districts"].get(province, []), help="District list is filtered by Province.")
+    location = st.selectbox("Location", metadata["location_values"], help="Combined District, Province feature parsed from Address.")
+    location_context = metadata.get("location_mapping", {}).get(location, {})
 
-    num_1, num_2 = st.columns(2)
+    st.markdown("**Physical attributes**")
+    num_1, num_2, num_3 = st.columns(3)
     with num_1:
-        area = st.number_input("Area (m²)", min_value=0.0, max_value=max(1000.0, float(ranges["Area"]["max"])), value=float(ranges["Area"]["median"]), step=1.0, help="Property area in square meters. Enter 0 if unavailable.")
-        bedrooms = st.number_input("Bedrooms", min_value=0.0, max_value=50.0, value=float(ranges["Bedrooms"]["median"]), step=1.0, help="Number of bedrooms. Enter 0 if unavailable.")
+        area = optional_numeric("Area (m²)", "Area", ranges)
+        floors = optional_numeric("Floors", "Floors", ranges)
     with num_2:
-        floors = st.number_input("Floors", min_value=0.0, max_value=50.0, value=float(ranges["Floors"]["median"]), step=1.0, help="Number of floors. Enter 0 if unavailable.")
-        bathrooms = st.number_input("Bathrooms", min_value=0.0, max_value=50.0, value=float(ranges["Bathrooms"]["median"]), step=1.0, help="Number of bathrooms. Enter 0 if unavailable.")
+        frontage = optional_numeric("Frontage (m)", "Frontage", ranges)
+        bedrooms = optional_numeric("Bedrooms", "Bedrooms", ranges)
+    with num_3:
+        access_road = optional_numeric("Access Road (m)", "Access Road", ranges)
+        bathrooms = optional_numeric("Bathrooms", "Bathrooms", ranges)
+
+    st.markdown("**Categorical attributes**")
+    cat_1, cat_2 = st.columns(2)
+    with cat_1:
+        house_direction = optional_choice("House direction", "House direction", metadata)
+        legal_status = optional_choice("Legal status", "Legal status", metadata)
+    with cat_2:
+        balcony_direction = optional_choice("Balcony direction", "Balcony direction", metadata)
+        furniture_state = optional_choice("Furniture state", "Furniture state", metadata)
+
     submit = st.button("Estimate House Price", type="primary", use_container_width=True)
 
 sample = pd.DataFrame(
     [
         {
-            "Area": np.nan if area == 0 else area,
-            "Floors": np.nan if floors == 0 else floors,
-            "Bedrooms": np.nan if bedrooms == 0 else bedrooms,
-            "Bathrooms": np.nan if bathrooms == 0 else bathrooms,
-            "Province": province,
-            "District": district,
+            "Area": area,
+            "Frontage": frontage,
+            "Access Road": access_road,
+            "House direction": house_direction,
+            "Balcony direction": balcony_direction,
+            "Floors": floors,
+            "Bedrooms": bedrooms,
+            "Bathrooms": bathrooms,
+            "Legal status": legal_status,
+            "Furniture state": furniture_state,
+            "Location": location,
         }
     ],
     columns=selected_features,
@@ -169,10 +214,7 @@ model = load_model(str(MODELS_DIR / model_info["file"]))
 if submit:
     predicted_billion = float(model.predict(sample)[0])
     predicted_vnd = predicted_billion * 1_000_000_000
-    sub_parts = [
-        f"≈ {predicted_vnd:,.0f} VND",
-        f"Model: {selected_model_name}",
-    ]
+    sub_parts = [f"≈ {predicted_vnd:,.0f} VND", f"Model: {selected_model_name}"]
     if selected_model_name == registry["scientific_final_model"]:
         sub_parts.append("Scientific Final Model")
     render_prediction_card(
@@ -182,7 +224,7 @@ if submit:
         "success",
     )
     try:
-        save_prediction(selected_model_name, sample.iloc[0].to_dict(), predicted_billion)
+        save_prediction(selected_model_name, sample.iloc[0].to_dict(), predicted_billion, metadata=metadata)
         render_info_banner("Anonymous prediction saved to the House Price Knowledge Graph.")
     except Exception:
         st.warning("Unable to save prediction to Knowledge Graph. The model prediction is still available.")
@@ -230,13 +272,12 @@ with graph_tab:
                         ("Model", ""),
                         ("Prediction", ""),
                         ("Target", "success"),
-                        ("Location", "warning"),
+                        ("Location Context", "warning"),
                         ("Source", ""),
                     ]
                 )
                 st.caption(
-                    "This graph connects the house-price prediction with the producing model, six deployment features, "
-                    "and District to Province hierarchy. Context nodes are not additional model inputs."
+                    "The graph connects prediction, model, 11 active features and District/Province context parsed from Location."
                 )
             else:
                 render_empty_state("No latest prediction graph yet", "Run a prediction to create an anonymous house observation.")
@@ -246,18 +287,23 @@ with graph_tab:
         render_empty_state("Knowledge Graph temporarily unavailable", "Prediction system is still operational.")
 
 with context_tab:
-    render_section_header("Property Context", "Context connected to the current six-feature representation.")
+    render_section_header("Property Context", "Current 11-feature sample plus geographic context derived from Location.")
     render_metric_grid(
         [
-            ("Province", str(province), "Broad location"),
-            ("District", str(district), "District-level location"),
-            ("Area", f"{area:,.1f} m²", "Model input"),
-            ("Floors", f"{floors:,.0f}", "Model input"),
-            ("Bedrooms", f"{bedrooms:,.0f}", "Model input"),
-            ("Bathrooms", f"{bathrooms:,.0f}", "Model input"),
+            ("Location", location, "Model input"),
+            ("District", str(location_context.get("district", "Unknown")), "Graph context"),
+            ("Province", str(location_context.get("province", "Unknown")), "Graph context"),
+            ("Area", display_value(area, " m²"), "Model input"),
+            ("Frontage", display_value(frontage, " m"), "Model input"),
+            ("Access Road", display_value(access_road, " m"), "Model input"),
+            ("Floors", display_value(floors), "Model input"),
+            ("Bedrooms", display_value(bedrooms), "Model input"),
+            ("Bathrooms", display_value(bathrooms), "Model input"),
+            ("Legal", display_value(legal_status), "Model input"),
+            ("Furniture", display_value(furniture_state), "Model input"),
         ]
     )
-    render_info_banner("Valuation factors shown here are factors represented in the model, not official market classifications.")
+    render_info_banner("Location is the model feature. District and Province are retained only as Knowledge Graph geographic context.")
 
 with recent_tab:
     render_section_header("Recent House Price Predictions", "Anonymous predictions without exact street address.")
@@ -267,16 +313,14 @@ with recent_tab:
             if recent_predictions:
                 for record in recent_predictions:
                     price = float(record.get("predicted_price_billion", 0.0))
-                    location = " · ".join(
-                        item
-                        for item in [record.get("province"), record.get("district")]
-                        if item
+                    location_label = record.get("location") or " · ".join(
+                        item for item in [record.get("district"), record.get("province")] if item
                     )
                     render_recent_prediction_card(
                         format_time(record.get("created_at")),
                         str(record.get("model", "Model")),
                         f"{price:,.2f} B VND",
-                        location or "Anonymous house price estimate",
+                        location_label or "Anonymous house price estimate",
                     )
             else:
                 render_empty_state("No predictions recorded yet", "Run a prediction to create the first anonymous graph observation.")
@@ -293,10 +337,10 @@ with graph_details_tab:
             render_metric_grid(
                 [
                     ("Models", str(summary.get("HouseModel", 0)), "Regressor nodes"),
-                    ("Features", str(summary.get("HouseFeature", 0)), "Input feature nodes"),
+                    ("Active Features", str(summary.get("ActiveHouseFeature", 0)), "Current model input nodes"),
                     ("Predictions", str(summary.get("HousePrediction", 0)), "Anonymous predictions"),
-                    ("Districts", str(summary.get("HouseDistrict", 0)), "Location nodes"),
-                    ("Domain Factors", str(summary.get("HouseValuationFactor", 0)), "Context-only factor nodes"),
+                    ("Districts", str(summary.get("HouseDistrict", 0)), "Location context nodes"),
+                    ("Domain Factors", str(summary.get("HouseValuationFactor", 0)), "Context factor nodes"),
                     ("Sources", str(summary.get("HouseKnowledgeSource", 0)), "Traceability nodes"),
                 ]
             )

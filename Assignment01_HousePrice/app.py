@@ -24,7 +24,7 @@ METADATA_PATH = MODELS_DIR / "ui_metadata.json"
 
 st.set_page_config(
     page_title="Vietnam House Price Prediction",
-    page_icon="house",
+    page_icon="HP",
     layout="centered",
 )
 
@@ -53,12 +53,33 @@ def format_metric(value):
     return f"{float(value):.4f}"
 
 
+def optional_numeric(label: str, feature: str, ranges: dict):
+    feature_range = ranges[feature]
+    value = st.number_input(
+        label,
+        min_value=0.0,
+        max_value=max(1000.0, float(feature_range["max"])),
+        value=float(feature_range["median"]),
+        step=1.0,
+        help="Enter 0 if this value is not available in the listing.",
+    )
+    return np.nan if value == 0 else value
+
+
+def optional_choice(label: str, feature: str, metadata: dict):
+    choices = metadata["categorical_choices"].get(feature, [])
+    missing_label = metadata.get("missing_label", "Not provided")
+    options = [missing_label] + [choice for choice in choices if choice != missing_label]
+    value = st.selectbox(label, options)
+    return np.nan if value == missing_label else value
+
+
 registry = load_json(REGISTRY_PATH, "model_registry.json")
 metadata = load_json(METADATA_PATH, "ui_metadata.json")
 selected_features = registry["selected_features"]
 
 st.title("Vietnam House Price Prediction System")
-st.caption("Vietnam Housing Dataset 2024")
+st.caption("Vietnam Housing Dataset 2024 · 11 model features")
 st.info(
     "Educational machine-learning demonstration. Predictions are model estimates "
     "and are not official property valuations."
@@ -75,29 +96,36 @@ if selected_model_name == registry["scientific_final_model"]:
 else:
     st.info("Deployment Comparison Model")
 
-province = st.selectbox("Province", metadata["provinces"])
-districts = metadata["province_districts"].get(province, [])
-district = st.selectbox("District", districts)
-
 ranges = metadata["numeric_ranges"]
-area = st.number_input(
-    "Area",
-    min_value=0.0,
-    max_value=max(1000.0, float(ranges["Area"]["max"])),
-    value=float(ranges["Area"]["median"]),
-    step=1.0,
-)
-floors = st.number_input("Floors", min_value=0.0, max_value=50.0, value=float(ranges["Floors"]["median"]), step=1.0)
-bedrooms = st.number_input("Bedrooms", min_value=0.0, max_value=50.0, value=float(ranges["Bedrooms"]["median"]), step=1.0)
-bathrooms = st.number_input("Bathrooms", min_value=0.0, max_value=50.0, value=float(ranges["Bathrooms"]["median"]), step=1.0)
+location = st.selectbox("Location", metadata["location_values"])
+location_context = metadata.get("location_mapping", {}).get(location, {})
+
+st.subheader("Physical Attributes")
+area = optional_numeric("Area (m²)", "Area", ranges)
+frontage = optional_numeric("Frontage (m)", "Frontage", ranges)
+access_road = optional_numeric("Access Road (m)", "Access Road", ranges)
+floors = optional_numeric("Floors", "Floors", ranges)
+bedrooms = optional_numeric("Bedrooms", "Bedrooms", ranges)
+bathrooms = optional_numeric("Bathrooms", "Bathrooms", ranges)
+
+st.subheader("Categorical Attributes")
+house_direction = optional_choice("House direction", "House direction", metadata)
+balcony_direction = optional_choice("Balcony direction", "Balcony direction", metadata)
+legal_status = optional_choice("Legal status", "Legal status", metadata)
+furniture_state = optional_choice("Furniture state", "Furniture state", metadata)
 
 sample = pd.DataFrame([{
-    "Area": np.nan if area == 0 else area,
-    "Floors": np.nan if floors == 0 else floors,
-    "Bedrooms": np.nan if bedrooms == 0 else bedrooms,
-    "Bathrooms": np.nan if bathrooms == 0 else bathrooms,
-    "Province": province,
-    "District": district,
+    "Area": area,
+    "Frontage": frontage,
+    "Access Road": access_road,
+    "House direction": house_direction,
+    "Balcony direction": balcony_direction,
+    "Floors": floors,
+    "Bedrooms": bedrooms,
+    "Bathrooms": bathrooms,
+    "Legal status": legal_status,
+    "Furniture state": furniture_state,
+    "Location": location,
 }], columns=selected_features)
 
 if st.button("Predict House Price", type="primary"):
@@ -111,10 +139,18 @@ if st.button("Predict House Price", type="primary"):
             model_name=selected_model_name,
             input_values=sample.iloc[0].to_dict(),
             predicted_price_billion=predicted_billion,
+            metadata=metadata,
         )
         st.success("Anonymous prediction saved to Neo4j Knowledge Graph.")
     except Exception as error:
         st.warning(f"Prediction completed, but Neo4j save is unavailable: {error}")
+
+st.subheader("Location Context")
+st.write({
+    "Location model input": location,
+    "District context": location_context.get("district"),
+    "Province context": location_context.get("province"),
+})
 
 st.subheader("Selected Model Metrics")
 metrics = model_info["cv_metrics"]
